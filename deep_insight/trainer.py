@@ -10,7 +10,6 @@ import numpy as np
 from torch import nn
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 import wandb
 
 # --------------------------------------------------------------
@@ -25,7 +24,6 @@ class Trainer(object):
         val_loader: DataLoader,
         criterion: nn.Module,
         optimizer: Optimizer,
-        summary_writer: SummaryWriter,
         device: torch.device,
     ):
         self.model = model.to(device)
@@ -34,7 +32,6 @@ class Trainer(object):
         self.val_loader = val_loader
         self.criterion = criterion
         self.optimizer = optimizer
-        self.summary_writer = summary_writer
         self.step = 0
 
     def train(

@@ -6,4 +6,6 @@ tqdm==4.54.1
 plotly==4.14.1
 scikit-image==0.18.1
 psutil==5.8.0
-git+https://github.com/CYHSM/wavelets
+pandas==1.2.1
+wandb==0.10.15
+h5py==3.1.0
