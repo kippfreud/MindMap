@@ -1,0 +1,9 @@
+numpy==1.19.3
+opencv-python==4.4.0.46
+matplotlib==3.3.3
+networkx==2.5
+tqdm==4.54.1
+plotly==4.14.1
+scikit-image==0.18.1
+psutil==5.8.0
+git+https://github.com/CYHSM/wavelets
