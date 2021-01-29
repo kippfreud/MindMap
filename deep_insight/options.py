@@ -39,8 +39,8 @@ def get_opts(fp_hdf_out, train_test_times):
     # -------- TRAINING----------------------
     opts['batch_size'] = 8  # Batch size used for training the model
     opts['steps_per_epoch'] = 250  # Number of steps per training epoch
-    opts['validation_steps'] = 250  # Number of steps per validation epoch
-    opts['epochs'] = 20  # Number of epochs
+    opts['validation_steps'] = 250  # Number of steps per validation epoch #..todo: val happens once per epoch now, this var is redundant
+    opts['epochs'] = 100  # Number of epochs
     opts['shuffle'] = True  # If input should be shuffled
     opts['random_batches'] = True  # If random batches in time are used
     opts['num_cvs'] = 5 # the number of cross validation splits
