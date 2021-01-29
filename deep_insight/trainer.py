@@ -124,7 +124,7 @@ class Trainer(object):
                 loss = torch.sum(losses)
                 total_loss += loss.item()
 
-        wandb.log({'step': self.step, 'val_loss': loss})
+        wandb.log({'step': self.step, 'val_loss': total_loss})
         print(f"Total Loss: {total_loss}")
 
 
