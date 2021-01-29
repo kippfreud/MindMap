@@ -81,7 +81,6 @@ for cv_run, cvs in enumerate(cv_splits):
         val_loader=test_loader,
         criterion=(loss_functions, loss_weights),
         optimizer=optimizer,
-        summary_writer=None,
         device=None
     )
 
