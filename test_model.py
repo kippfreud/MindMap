@@ -86,13 +86,18 @@ model.load_state_dict(torch.load('models/trained_0.pt'))
 model.eval()
 
 plt.ion()
-losses = []
+pos_losses = []
+hd_losses = []
+speed_losses = []
 for batch, labels in test_loader:
     logits = model(batch)
     position_ests = list(logits[0])
     position = list(labels[0])
-    losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
-
+    pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
+    hd_losses.append(
+        training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())
+    speed_losses.append(
+        training_options['loss_functions']['speed'](labels[0], logits[0]).mean().detach().numpy().item())
     # for i in range(len(position)):
     #     for j in range(len(list(position[i]))):
     #         plt.scatter(list(position[i])[j].detach().numpy()[0], list(position[i])[j].detach().numpy()[1], c="green")
@@ -100,6 +105,12 @@ for batch, labels in test_loader:
     #         plt.draw()
     #         plt.pause(0.0001)
     # print("ok")
-losses = torch.tensor(losses)
-print(losses.mean())
+pos_losses = torch.tensor(pos_losses)
+hd_losses = torch.tensor(hd_losses)
+speed_losses = torch.tensor(speed_losses)
+
+print(f"Position loss: {pos_losses.mean()}")
+print(f"HD loss: {hd_losses.mean()}")
+print(f"Speed loss: {speed_losses.mean()}")
+
 print("DONE!")
