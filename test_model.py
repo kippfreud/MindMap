@@ -63,6 +63,7 @@ training_options['loss_functions'] = loss_functions.copy()
 training_options['loss_weights'] = loss_weights
 training_options['loss_names'] = list(loss_functions.keys())
 training_options['shuffle'] = False
+training_options['random_batches'] = False
 
 train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_file)
 
@@ -89,15 +90,29 @@ plt.ion()
 pos_losses = []
 hd_losses = []
 speed_losses = []
+P = 1
 for batch, labels in test_loader:
     logits = model(batch)
     position_ests = list(logits[0])
     position = list(labels[0])
-    pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
-    hd_losses.append(
-        training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())
-    speed_losses.append(
-        training_options['loss_functions']['speed'](labels[0], logits[0]).mean().detach().numpy().item())
+    plot_positions = [p[3] for p in position]
+    plot_position_ests = [p[3] for p in position_ests]
+    for i in range(len(plot_positions)):
+        plt.clf()
+        plt.xlim([0,200])
+        plt.ylim([0, 200])
+        plt.scatter([plot_positions[i][0]], [plot_positions[i][1]], c="green")
+        plt.scatter([plot_position_ests[i][0].item()], [plot_position_ests[i][1].item()], c="red")
+        plt.draw()
+        plt.pause(0.0001)
+        print(f"{P}")
+        plt.savefig(f"imgs/{P}.png")
+        P += 1
+    # pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
+    # hd_losses.append(
+    #     training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())
+    # speed_losses.append(
+    #     training_options['loss_functions']['speed'](labels[0], logits[0]).mean().detach().numpy().item())
     # for i in range(len(position)):
     #     for j in range(len(list(position[i]))):
     #         plt.scatter(list(position[i])[j].detach().numpy()[0], list(position[i])[j].detach().numpy()[1], c="green")
