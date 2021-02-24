@@ -73,16 +73,19 @@ class Trainer(object):
                 for ind, logit in enumerate(logits):
                     loss_func = list(self.criterion[0].values())[ind]
                     loss_weight= list(self.criterion[1].values())[ind]
-                    losses = torch.cat((
-                        losses,
-                        torch.multiply(
+                    loss_key = list(self.criterion[0].keys())[ind]
+                    l = torch.multiply(
                             loss_func(logit, labels[ind]) ,
                             loss_weight
                         )
+                    if self.use_wandb: wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.sum(l)})
+                    losses = torch.cat((
+                        losses,
+                        l
                     ))
                 loss = torch.sum(losses)
                 print(f"Loss = {loss}")
-                if self.use_wandb: wandb.log({'step': self.step, 'tr_loss': loss})
+                if self.use_wandb: wandb.log({'step': self.step, 'Training_Loss_Total': loss})
                 ## TASK 10: Compute the backward pass
                 # Now we compute the backward pass, which populates the `.grad` attributes of the parameters
                 loss.backward()
@@ -118,17 +121,20 @@ class Trainer(object):
                     logit.to(self.device)
                     loss_func = list(self.criterion[0].values())[ind]
                     loss_weight = list(self.criterion[1].values())[ind]
-                    losses = torch.cat((
-                        losses,
-                        torch.multiply(
+                    loss_key = list(self.criterion[0].keys())[ind]
+                    l = torch.multiply(
                             loss_func(logit, labels[ind]),
                             loss_weight
                         )
+                    #if self.use_wandb: wandb.log({'step': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
+                    losses = torch.cat((
+                        losses,
+                        l
                     ))
                 loss = torch.sum(losses)
                 total_loss += loss.item()
 
-        if self.use_wandb: wandb.log({'step': self.step, 'val_loss': total_loss})
+        if self.use_wandb: wandb.log({'step': self.step, 'Validation_Loss_Total': total_loss})
         print(f"Total Loss: {total_loss}")
 
 

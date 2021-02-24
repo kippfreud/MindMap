@@ -29,7 +29,8 @@ if __name__ == '__main__':
 
     if USE_WANDB: wandb.init(project="my-project")
 
-    PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
+    #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
+    PREPROCESSED_HDF5_PATH = 'data/preprocessed_final.h5'
     hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
     wavelets = np.array(hdf5_file['inputs/wavelets'])
     frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
@@ -43,8 +44,8 @@ if __name__ == '__main__':
         loss_functions[key] = function_handle
 
     loss_weights = {'position': 1,
-                    'head_direction': 25,
-                    'speed': 2}
+                    'head_direction': 10, #was 10, tweaked for MJ
+                    'speed': 3000} #was 2 but tweaked for MJ dataset
 
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
     training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(np.array([]), np.array([])))
@@ -98,5 +99,5 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/trained_{cv_run}.pt")
+        torch.save(model.state_dict(), f"models/MJ_trained_{cv_run}.pt")
         print("Done!")
