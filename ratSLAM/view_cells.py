@@ -210,7 +210,7 @@ class ViewCells(object):
         #..todo:: THRESHOLD SHOULD INCREASE WITH NUMBER OF VIEW CELLS.
         if self.size == 0:
             return True
-        if np.min(scores) > 0.09: #..todo: global param
+        if np.min(scores) > 50: #..todo: global param
             return True
         return False
 

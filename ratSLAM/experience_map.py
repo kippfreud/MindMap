@@ -144,7 +144,7 @@ class ExperienceMap(object):
     """
     Experience map module.
     """
-    def __init__(self, x_dim, y_dim, th_dim, dist_threshold=100.0,
+    def __init__(self, x_dim, y_dim, th_dim, dist_threshold=10,
                  graph_relaxation_cycles=100, correction_rate=0.5):
         """
         Instantiates the Experience Map.
@@ -181,23 +181,31 @@ class ExperienceMap(object):
         # Minimum distance from active experience node required to create
         # new experience node.
         self._dist_threshold = dist_threshold
+        # Keep track of initial position and angle for debugging purposes
+        self.initial_pose = None
 
     ###########################################################
     # Public Methods
     ###########################################################
 
-    def plot(self):
+    def plot(self, true_loc=None):
         """
         Plots experience map
 
         ..todo::make this better
         """
+        if self.initial_pose is None:
+            self.initial_pose = true_loc
         pos = {e: (e.x_em, e.y_em) for e in self.G.nodes}
         cols = ["#004650" if e==self.current_exp else "#933A16" for e in self.G.nodes]
         # plots e_m
         plt.ion()
         plt.clf()
+        # plt.xlim((-300,300))
+        # plt.ylim((-300, 300))
         nx.draw(self.G, pos=pos, node_color=cols, node_size=50)
+        #if true_loc is not None:
+            #plt.scatter([true_loc[0] - self.initial_pose[0]], [true_loc[1] - self.initial_pose[1]], c="green")
         plt.pause(0.005)
         # plots odometry
         th = self.accum_th
@@ -224,8 +232,8 @@ class ExperienceMap(object):
         else:
             distance = np.sqrt(
                 self._min_dist(self.current_exp.x_pc, x_pc, self.dims[0])**2 + \
-                self._min_dist(self.current_exp.y_pc, y_pc, self.dims[1])**2 + \
-                self._min_dist(self.current_exp.th_pc, th_pc, self.dims[2])**2
+                self._min_dist(self.current_exp.y_pc, y_pc, self.dims[1])**2 #+ \
+                #self._min_dist(self.current_exp.th_pc, th_pc, self.dims[2])**2
             )
         # Keep track of whether to adjust map (in case of loop closure)
         adjust_map = False
@@ -257,8 +265,8 @@ class ExperienceMap(object):
             for experience in view_cell.iter_experiences():
                 distance = np.sqrt(
                     self._min_dist(experience.x_pc, x_pc, self.dims[0])**2 + \
-                    self._min_dist(experience.y_pc, y_pc, self.dims[1])**2 + \
-                    self._min_dist(experience.th_pc, th_pc, self.dims[2])**2
+                    self._min_dist(experience.y_pc, y_pc, self.dims[1])**2 #+ \
+                    #self._min_dist(experience.th_pc, th_pc, self.dims[2])**2
                 )
                 distances_from_center.append(distance)
                 if distance < self._dist_threshold:

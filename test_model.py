@@ -17,6 +17,7 @@ import numpy as np
 import torch
 import wandb
 import matplotlib.pyplot as plt
+import imageio
 
 # -----------------------------------------------------------------------
 
@@ -27,11 +28,12 @@ else:
 
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/preprocessed_final.h5'
+PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ.h5'
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
                   'head_direction': 'cyclical_mae_rad',
+                  'direction': 'cyclical_mae_rad',
                   'speed': 'mae'}
 # Get loss functions for each output
 for key, item in loss_functions.items():
@@ -40,6 +42,7 @@ for key, item in loss_functions.items():
 
 loss_weights = {'position': 1,
                 'head_direction': 25,
+                'direction': 25,
                 'speed': 2}
 # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
 training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(np.array([]), np.array([])))
@@ -84,7 +87,7 @@ test_loader = torch.utils.data.DataLoader(
 
 model_function = getattr(deep_insight.networks, train_dataset.model_function)
 model = model_function(train_dataset, show_summary=False)
-model.load_state_dict(torch.load('models/MJ_trained_0.pt'))
+model.load_state_dict(torch.load('models/trained_0.pt'))
 model.eval()
 
 plt.ion()
@@ -109,69 +112,86 @@ compass_ax.set_yticks(np.arange(0, 5, 1.0))
 # arr2 = compass_ax.arrow(45 / 180. * np.pi, 0.5, 0, 1, alpha=0.5, width=0.05,
 #                  edgecolor='black', facecolor='green', lw=2, zorder=5)
 
-for batch, labels in test_loader:
-    logits = model(batch)
+with imageio.get_writer('mygif.gif', mode='I') as writer:
+    for batch, labels in test_loader:
+        logits = model(batch)
 
-    position_ests = list(logits[0])
-    angle_ests = list(logits[1])
-    speed_ests = list(logits[2])
+        position_ests = list(logits[0])
+        angle_ests = list(logits[2])
+        speed_ests = list(logits[3])
 
-    position = list(labels[0])
-    angle = list(labels[1])
-    speeds = list(labels[2])
+        position = list(labels[0])
+        angle = list(labels[2])
+        speeds = list(labels[3])
 
-    plot_positions = [p[3] for p in position]
-    plot_position_ests = [p[3] for p in position_ests]
+        plot_positions = [p[3] for p in position]
+        plot_position_ests = [p[3] for p in position_ests]
 
-    plot_angle = [a[3] for a in angle]
-    plot_angle_ests = [a[3] for a in angle_ests]
+        plot_angle = [a[3] for a in angle]
+        plot_angle_ests = [a[3] for a in angle_ests]
 
-    plot_speed = [s[3] for s in speeds]
-    plot_speed_ests = [s[3] for s in speed_ests]
+        plot_speed = [s[3] for s in speeds]
+        plot_speed_ests = [s[3] for s in speed_ests]
 
-    # radar green, solid grid lines
-    plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
-    plt.rc('xtick', labelsize=15)
-    plt.rc('ytick', labelsize=15)
-    # force square figure and square axes looks better for polar, IMO
-    # width, height = matplotlib.rcParams['figure.figsize']
-    # size = min(width, height)
-    # make a square figure
-    #ax.plot()
-    #ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
+        # radar green, solid grid lines
+        plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
+        plt.rc('xtick', labelsize=15)
+        plt.rc('ytick', labelsize=15)
+        # force square figure and square axes looks better for polar, IMO
+        # width, height = matplotlib.rcParams['figure.figsize']
+        # size = min(width, height)
+        # make a square figure
+        #ax.plot()
+        #ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
 
-    for i in range(len(plot_positions)):
-        # plt.clf()
-        # plt.xlim([0,200])
-        # plt.ylim([0, 200])
-        # plt.xlim([0,750])
-        # plt.ylim([0,600])
-        position_ax.clear()
-        compass_ax.clear()
 
-        position_ax.set_xlim([0, 750])
-        position_ax.set_ylim([0, 600])
+        for i in range(len(plot_positions)):
+            # plt.clf()
+            # plt.xlim([0,200])
+            # plt.ylim([0, 200])
+            # plt.xlim([0,750])
+            # plt.ylim([0,600])
+            position_ax.clear()
+            compass_ax.clear()
 
-        compass_ax.set_ylim(0, 0.2)
-        compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
+            position_ax.set_xlim([0, 750])
+            position_ax.set_ylim([0, 600])
 
-        position_ax.scatter([plot_positions[i][0]], [plot_positions[i][1]], c="green")
-        position_ax.scatter([plot_position_ests[i][0].item()], [plot_position_ests[i][1].item()], c="red")
-        compass_ax.arrow(0, 0,
-                         speeds[i][0].item()*np.cos(angle[i][0].item()*(2*np.pi / 360. )),
-                         speeds[i][0].item() * np.sin(angle[i][0].item()*(2 * np.pi / 360.)),
-                         alpha=0.5, width=0.001,
-                         edgecolor='black', facecolor='green', lw=2, zorder=5)
-        compass_ax.arrow(0, 0,
-                         speed_ests[i][0].item() * np.cos(angle_ests[i][0].item() * (2 * np.pi / 360.)),
-                         speed_ests[i][0].item() * np.sin(angle_ests[i][0].item() * (2 * np.pi / 360.)),
-                         alpha=0.5, width=0.001,
-                         edgecolor='black', facecolor='red', lw=2, zorder=5)
-        plt.draw()
-        plt.pause(0.0001)
-        print(f"{P}")
-        #plt.savefig(f"imgs/{P}.png")
-        P += 1
+            compass_ax.set_ylim(0, 0.02)
+            compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
+
+            position_ax.scatter([plot_positions[i][0]], [plot_positions[i][1]], c="green")
+            position_ax.scatter([plot_position_ests[i][0].item()], [plot_position_ests[i][1].item()], c="red")
+            tr_x = speeds[i][0].item()*np.cos(angle[i][0].item()*(2*np.pi / 360. ))
+            tr_y = speeds[i][0].item() * np.sin(angle[i][0].item() * (2 * np.pi / 360.))
+            tr_y = -1.
+            ty_x = -1.
+            es_x = speed_ests[i][0].item() * np.cos(angle_ests[i][0].item() * (2 * np.pi / 360.))
+            es_y = speed_ests[i][0].item() * np.sin(angle_ests[i][0].item() * (2 * np.pi / 360.))
+            es_x = -1.
+            es_y = -1.
+            th = angle[i][0].item()* (2 * np.pi / 360.)
+            sp = speeds[i][0].item()
+            compass_ax.arrow(0, 0,
+                             #-5.,5.,
+                             th, sp,
+                             alpha=0.5, width=0.001,
+                             edgecolor='black', facecolor='green', lw=2, zorder=5)
+            the = angle_ests[i][0].item()* (2 * np.pi / 360.)
+            spe = speed_ests[i][0].item()
+            compass_ax.arrow(0, 0,
+                             the, spe,
+                             alpha=0.5, width=0.001,
+                             edgecolor='black', facecolor='red', lw=2, zorder=5)
+            plt.draw()
+            plt.pause(0.0001)
+            print(f"{P}")
+            #plt.savefig(f"imgs/{P}.png")
+            P += 1
+
+            image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+            image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            writer.append_data(image)
     # pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
     # hd_losses.append(
     #     training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())

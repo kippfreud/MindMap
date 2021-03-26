@@ -78,6 +78,7 @@ class Trainer(object):
                             loss_func(logit, labels[ind]) ,
                             loss_weight
                         )
+                    if self.use_wandb: wandb.log({'epoch': epoch, f'Training_Loss_{loss_key}': torch.sum(l)})
                     if self.use_wandb: wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.sum(l)})
                     losses = torch.cat((
                         losses,
@@ -85,6 +86,7 @@ class Trainer(object):
                     ))
                 loss = torch.sum(losses)
                 print(f"Loss = {loss}")
+                if self.use_wandb: wandb.log({'epoch': epoch, 'Training_Loss_Total': loss})
                 if self.use_wandb: wandb.log({'step': self.step, 'Training_Loss_Total': loss})
                 ## TASK 10: Compute the backward pass
                 # Now we compute the backward pass, which populates the `.grad` attributes of the parameters
