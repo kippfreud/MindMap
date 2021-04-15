@@ -27,13 +27,13 @@ else:
 
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ.h5'
+PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ_smoothmove.h5'
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
                   'head_direction': 'cyclical_mae_rad',
                   'direction': 'cyclical_mae_rad',
-                  'direction_delta': 'cyclical_mae_rad',
+                  #'direction_delta': 'cyclical_mae_rad',
                   'speed': 'mae'}
 # Get loss functions for each output
 for key, item in loss_functions.items():
@@ -43,7 +43,7 @@ for key, item in loss_functions.items():
 loss_weights = {'position': 1,
                 'head_direction': 25,
                 'direction': 25,
-                'direction_delta': 25,
+                #'direction_delta': 25,
                 'speed': 2}
 # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
 training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(np.array([]), np.array([])))
@@ -79,7 +79,7 @@ MODEL.eval()
 def get_odometry(data):
     tansor = torch.from_numpy(data).unsqueeze(0)
     logits = MODEL(tansor)
-    position_ests = list(logits[0])[0][0]
-    angle_ests = list(logits[2])[0][0]
-    speed_ests = list(logits[4])[0][0]
+    position_ests = list(logits[0])[0][3]
+    angle_ests = list(logits[2])[0][3]
+    speed_ests = list(logits[3])[0][3]
     return speed_ests[0].item(), angle_ests.item() * (np.pi /180.)

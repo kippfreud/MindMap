@@ -397,7 +397,7 @@ if __name__ == '__main__':
 
     # wavelets = np.array(hdf5_file['inputs/wavelets'])
     # frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
-    preprocess_input("data/preprocessed_MJ.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
+    preprocess_input("data/preprocessed_MJ_smoothmove.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
                      average_window=250,
                      channels=list(range(training_options['channels'])))
 

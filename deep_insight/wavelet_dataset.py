@@ -116,9 +116,12 @@ class WaveletDataset(Dataset):
             cut_data = out[cut_range, ...]
 
             # 3.) Divide evenly and make sure last output is being decoded
-            if self.average_output:
-                cut_data = cut_data[np.arange(0, cut_data.shape[0] + 1, self.average_output)[1::] - 1]
-            out_sample.append(cut_data)
+
+            # if self.average_output:
+            #     cut_data = cut_data[np.arange(0, cut_data.shape[0] + 1, self.average_output)[1::] - 1]
+            # out_sample.append(cut_data)
+            ## ..todo: replaced above with below: kipp!
+            cut_data = np.mean(cut_data,0)
 
         return out_sample
 

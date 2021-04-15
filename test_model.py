@@ -26,9 +26,10 @@ if torch.cuda.is_available():
 else:
     DEVICE = torch.device("cpu")
 
+takeout = False
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ.h5'
+PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ_smoothmove.h5'
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
@@ -87,7 +88,7 @@ test_loader = torch.utils.data.DataLoader(
 
 model_function = getattr(deep_insight.networks, train_dataset.model_function)
 model = model_function(train_dataset, show_summary=False)
-model.load_state_dict(torch.load('models/trained_0.pt'))
+model.load_state_dict(torch.load('models/trained_0_5epoch.pt'))
 model.eval()
 
 plt.ion()
@@ -144,7 +145,6 @@ with imageio.get_writer('mygif.gif', mode='I') as writer:
         #ax.plot()
         #ax = fig.add_axes([0.1, 0.1, 0.8, 0.8], polar=True)
 
-
         for i in range(len(plot_positions)):
             # plt.clf()
             # plt.xlim([0,200])
@@ -192,11 +192,13 @@ with imageio.get_writer('mygif.gif', mode='I') as writer:
             image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
             image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             writer.append_data(image)
-    # pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
-    # hd_losses.append(
-    #     training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())
-    # speed_losses.append(
-    #     training_options['loss_functions']['speed'](labels[0], logits[0]).mean().detach().numpy().item())
+
+    pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
+    hd_losses.append(
+        training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())
+    speed_losses.append(
+        training_options['loss_functions']['speed'](labels[0], logits[0]).mean().detach().numpy().item())
+
     # for i in range(len(position)):
     #     for j in range(len(list(position[i]))):
     #         plt.scatter(list(position[i])[j].detach().numpy()[0], list(position[i])[j].detach().numpy()[1], c="green")

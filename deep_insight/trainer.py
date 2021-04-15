@@ -32,6 +32,7 @@ class Trainer(object):
         self.criterion = (criterion[0], {key: torch.tensor(value).to(self.device) for (key,value) in criterion[1].items()})
         self.optimizer = optimizer
         self.step = 0
+        self.epoch = 0
         self.use_wandb = use_wandb
 
     def train(
@@ -95,6 +96,7 @@ class Trainer(object):
                 ## TASK 12: Step the optimizer and then zero out the gradient buffers.
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+                self.epoch = epoch
 
                 self.step += 1
 
@@ -128,7 +130,9 @@ class Trainer(object):
                             loss_func(logit, labels[ind]),
                             loss_weight
                         )
-                    #if self.use_wandb: wandb.log({'step': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
+                    if self.use_wandb:
+                        wandb.log({'step': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
+                        wandb.log({'epoch': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
                     losses = torch.cat((
                         losses,
                         l

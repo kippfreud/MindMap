@@ -23,7 +23,8 @@ def generate_dummy_dataset(n_loops=5,
                            noise_templates=1/10,
                            len_data_templates=20,
                            template_mean=10000,
-                           template_sd=10
+                           template_sd=10,
+                           step_len=0.1
                            ):
     """
     Generates a DummyInput dataset of a rat travelling in a perfect square.
@@ -33,7 +34,7 @@ def generate_dummy_dataset(n_loops=5,
     for i in range(steps_per_loops):
         templates.append(np.random.normal(template_mean,template_sd,len_data_templates))
     visuals = templates * n_loops
-    trans = [0.1]*tot_len
+    trans = [step_len]*tot_len
     rots = ([0.]*int(round((steps_per_loops-4)/4)) + [np.pi/2]) * 3
     for i in range(steps_per_loops - len(rots)):
         rots.append(0.)

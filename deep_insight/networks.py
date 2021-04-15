@@ -64,6 +64,22 @@ class Standard_Decoder(nn.Module):
                                 f"conv_fr_{nct}_activation",
                                 ]
 
+        # setattr(self,
+        #         f"conv_tsr_{nct}",
+        #         TimeDistributed(
+        #             nn.Conv2d(in_channels=input_channels,
+        #                       out_channels=tg.filter_size,
+        #                       kernel_size=(tg.kernel_size, tg.kernel_size),
+        #                       stride=(1, 2),
+        #                       padding=(1, 1))
+        #         )
+        #         )
+        # setattr(self,
+        #         f"conv_tsr_{nct}_activation",
+        #         getattr(nn, tg.act_conv)()
+        #         )
+
+
         self.permute = Lambda(lambda x: x.permute((0, 3, 2, 4, 1)))
         self.conv_order.append("permute")
 
@@ -95,7 +111,8 @@ class Standard_Decoder(nn.Module):
         self.fc_orders = []
         for key, output in zip(tg.loss_functions.keys(), tg.outputs):
             fc_order = []
-            initial_in_channels = 512 #..todo: should not be hardcoded!
+            print(H)
+            initial_in_channels = 256 * H #..todo: should not be hardcoded!
             for d in range(0, tg.num_dense):
                 setattr(self,
                         f"target_{key}_fc_{d}",

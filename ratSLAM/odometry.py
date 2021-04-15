@@ -40,7 +40,8 @@ class Odometry(object):
         :return: inferred translation and rotation
         """
         translation, r = self._get_odometry(input)
-        if self.old_rotation is None:
+
+        if self.old_rotation is None or absolute_rot is False:
             rotation = r
         else:
             rotation = self._get_angle_diff(r, self.old_rotation)
@@ -55,6 +56,7 @@ class Odometry(object):
             self.odometry[2] = rotation
         else:
             self.odometry[2] += rotation
+
         self.odometry[0] += translation * np.cos(self.odometry[2])
         self.odometry[1] += translation * np.sin(self.odometry[2])
 

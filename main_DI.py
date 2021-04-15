@@ -30,7 +30,7 @@ if __name__ == '__main__':
     if USE_WANDB: wandb.init(project="my-project")
 
     #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-    PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ.h5'
+    PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ_smoothmove.h5'
     hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
     wavelets = np.array(hdf5_file['inputs/wavelets'])
     frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     loss_functions = {'position': 'euclidean_loss',
                       'head_direction': 'cyclical_mae_rad',
                       'direction': 'cyclical_mae_rad',
-                      'direction_delta': 'cyclical_mae_rad',
+                      #'direction_delta': 'cyclical_mae_rad',
                       'speed': 'mae'}
     # Get loss functions for each output
     for key, item in loss_functions.items():
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     loss_weights = {'position': 1,
                     'head_direction': 10,  #was 10, tweaked for MJ
                     'direction': 10,  # was 10, tweaked for MJ
-                    'direction_delta': 10,  # was 10, tweaked for MJ
+                    #'direction_delta': 10,  # was 10, tweaked for MJ
                     'speed': 3000} #was 2 but tweaked for MJ dataset
 
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
@@ -103,6 +103,6 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/trained_{cv_run}.pt")
+        torch.save(model.state_dict(), f"models/trained_{cv_run}_5epoch.pt")
         print("Done!")
         exit(0)
