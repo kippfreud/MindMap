@@ -129,7 +129,7 @@ class MattJonesDummyInput(Input):
         other_loc = other_data.raw_data[1][0]
         other_ang = other_data.raw_data[1][1]
         loc_diff = ( (current_loc[0] - other_loc[0])**2 + (current_loc[1] - other_loc[1])**2 ) ** 0.5
-        ang_diff = np.abs(current_ang[0] - other_ang[0])*(np.pi/180.)
+        ang_diff = np.abs(current_ang - other_ang)*(np.pi/180.)
         return loc_diff + ang_diff
         #return 1.
 

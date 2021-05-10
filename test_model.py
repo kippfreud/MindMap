@@ -29,7 +29,9 @@ else:
 takeout = False
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ_smoothmove.h5'
+PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
+MODEL_PATH = 'models/trained_grid_world_500.pt'
+
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
@@ -88,7 +90,7 @@ test_loader = torch.utils.data.DataLoader(
 
 model_function = getattr(deep_insight.networks, train_dataset.model_function)
 model = model_function(train_dataset, show_summary=False)
-model.load_state_dict(torch.load('models/trained_0_5epoch.pt'))
+model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()
 
 plt.ion()
@@ -113,7 +115,18 @@ compass_ax.set_yticks(np.arange(0, 5, 1.0))
 # arr2 = compass_ax.arrow(45 / 180. * np.pi, 0.5, 0, 1, alpha=0.5, width=0.05,
 #                  edgecolor='black', facecolor='green', lw=2, zorder=5)
 
-with imageio.get_writer('mygif.gif', mode='I') as writer:
+poses = []
+for batch, labels in test_loader:
+    pos = labels[0]
+    poses += pos
+plt.scatter([p[0] for p in poses], [p[1] for p in poses])
+
+ALL_TH = []
+ALL_SP = []
+ALL_THE = []
+ALL_SPE = []
+
+with imageio.get_writer('test.gif', mode='I') as writer:
     for batch, labels in test_loader:
         logits = model(batch)
 
@@ -125,14 +138,14 @@ with imageio.get_writer('mygif.gif', mode='I') as writer:
         angle = list(labels[2])
         speeds = list(labels[3])
 
-        plot_positions = [p[3] for p in position]
-        plot_position_ests = [p[3] for p in position_ests]
+        plot_positions = position
+        plot_position_ests = position_ests
 
-        plot_angle = [a[3] for a in angle]
-        plot_angle_ests = [a[3] for a in angle_ests]
+        plot_angle = angle
+        plot_angle_ests = angle_ests
 
-        plot_speed = [s[3] for s in speeds]
-        plot_speed_ests = [s[3] for s in speed_ests]
+        plot_speed = speeds
+        plot_speed_ests = speed_ests
 
         # radar green, solid grid lines
         plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
@@ -162,26 +175,34 @@ with imageio.get_writer('mygif.gif', mode='I') as writer:
 
             position_ax.scatter([plot_positions[i][0]], [plot_positions[i][1]], c="green")
             position_ax.scatter([plot_position_ests[i][0].item()], [plot_position_ests[i][1].item()], c="red")
-            tr_x = speeds[i][0].item()*np.cos(angle[i][0].item()*(2*np.pi / 360. ))
-            tr_y = speeds[i][0].item() * np.sin(angle[i][0].item() * (2 * np.pi / 360.))
+            tr_x = speeds[i].item()*np.cos(angle[i].item()*(2.*np.pi / 360. ))
+            tr_y = speeds[i].item() * np.sin(angle[i].item() * (2. * np.pi / 360.))
             tr_y = -1.
             ty_x = -1.
-            es_x = speed_ests[i][0].item() * np.cos(angle_ests[i][0].item() * (2 * np.pi / 360.))
-            es_y = speed_ests[i][0].item() * np.sin(angle_ests[i][0].item() * (2 * np.pi / 360.))
+            es_x = speed_ests[i].item() * np.cos(angle_ests[i].item() * (2. * np.pi / 360.))
+            es_y = speed_ests[i].item() * np.sin(angle_ests[i].item() * (2. * np.pi / 360.))
             es_x = -1.
             es_y = -1.
-            th = angle[i][0].item()* (2 * np.pi / 360.)
-            sp = speeds[i][0].item()
+
+            th = (angle[i].item())
+            sp = speeds[i].item()
+
             compass_ax.arrow(0, 0,
                              #-5.,5.,
                              th, sp,
-                             alpha=0.5, width=0.001,
+                             alpha=0.5, width=0.1,
                              edgecolor='black', facecolor='green', lw=2, zorder=5)
-            the = angle_ests[i][0].item()* (2 * np.pi / 360.)
-            spe = speed_ests[i][0].item()
+            the = angle_ests[i].item()
+            spe = speed_ests[i].item()
+
+            ALL_TH.append(th)
+            ALL_SP.append(sp)
+            ALL_THE.append(the)
+            ALL_SPE.append(spe)
+
             compass_ax.arrow(0, 0,
                              the, spe,
-                             alpha=0.5, width=0.001,
+                             alpha=0.5, width=0.1,
                              edgecolor='black', facecolor='red', lw=2, zorder=5)
             plt.draw()
             plt.pause(0.0001)

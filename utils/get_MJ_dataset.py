@@ -28,7 +28,7 @@ else:
 
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/preprocessed_MJ.h5'
+PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
@@ -74,7 +74,7 @@ dataset = []
 
 for t in test_dataset:
     d = t[0]
-    labels = [t_2[0] for t_2 in t[1]]
+    labels = [t_2 for t_2 in t[1]]
     dataset.append( MattJonesDummyInput( (d, labels) ) )
 
 def get_mj_dataset():

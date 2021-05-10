@@ -64,23 +64,7 @@ class Standard_Decoder(nn.Module):
                                 f"conv_fr_{nct}_activation",
                                 ]
 
-        # setattr(self,
-        #         f"conv_tsr_{nct}",
-        #         TimeDistributed(
-        #             nn.Conv2d(in_channels=input_channels,
-        #                       out_channels=tg.filter_size,
-        #                       kernel_size=(tg.kernel_size, tg.kernel_size),
-        #                       stride=(1, 2),
-        #                       padding=(1, 1))
-        #         )
-        #         )
-        # setattr(self,
-        #         f"conv_tsr_{nct}_activation",
-        #         getattr(nn, tg.act_conv)()
-        #         )
-
-
-        self.permute = Lambda(lambda x: x.permute((0, 3, 2, 4, 1)))
+        self.permute = Lambda(lambda x: x.permute((0, 4, 2, 3, 1)))
         self.conv_order.append("permute")
 
         num_channels = tg.filter_size
@@ -147,7 +131,7 @@ class Standard_Decoder(nn.Module):
             x = getattr(self, fc_order[0])(flat_x)
             for step_name in fc_order[1::]:
                 x = getattr(self, step_name)(x)
-            outputs.append(x)
+            outputs.append(torch.squeeze(x,1))
         return outputs
 
     @staticmethod

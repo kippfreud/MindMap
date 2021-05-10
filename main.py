@@ -6,6 +6,8 @@ This will perform the RatSLAM algorithm on the video file given in ...
 # -----------------------------------------------------------------------
 
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import imageio
 
 from ratSLAM.data_simulation import generate_dummy_dataset
 from ratSLAM.ratSLAM import RatSLAM
@@ -33,11 +35,17 @@ if __name__ == "__main__":
     #                               template_sd=10,
     #                               step_len=0.00001
     #                               )
-
-    for i, d in enumerate(data):
-        slam.step(d)
-        if i%1 == 0 and i>0:
-            slam.experience_map.plot(true_loc=d.raw_data[1][0])
-
+    x = []
+    y = []
+    with imageio.get_writer('NeuroSLAM-Full.gif', mode='I') as writer:
+        for i, d in enumerate(data):
+            print(i)
+            if i > 1000:
+                break
+            slam.step(d)
+            if i%1 == 0 and i>0:
+                slam.experience_map.plot(writer)
+    plt.scatter(x,y)
+    plt.show()
     showTiming()
     print("done")

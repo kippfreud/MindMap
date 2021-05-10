@@ -7,8 +7,10 @@ Class containing experience map functionality.
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+import imageio
 
 from ratSLAM.utilities import timethis
+from utils.misc import rotate
 
 # -----------------------------------------------------------------------
 
@@ -175,7 +177,7 @@ class ExperienceMap(object):
         # experience node.
         self.accum_diff_x = 0
         self.accum_diff_y = 0
-        self.accum_th = np.pi / 2
+        self.accum_th = 0#np.pi / 2
         # history of previously visited experience nodes
         self.history = []
         # Minimum distance from active experience node required to create
@@ -183,35 +185,70 @@ class ExperienceMap(object):
         self._dist_threshold = dist_threshold
         # Keep track of initial position and angle for debugging purposes
         self.initial_pose = None
+        self.true_pose = None
+        self.true_speed = None
+        self.prev_visited = []
+
+        # Plotting
+        self.fig = plt.figure(figsize=(10., 4.))
+        self.position_ax = self.fig.add_subplot(121, facecolor='#E6E6E6')
+        self.position_ax.set_xlim([0, 750])
+        self.position_ax.set_ylim([0, 600])
+        self.compass_ax = self.fig.add_subplot(122, polar=True, facecolor='#E6E6E6')
+        self.compass_ax.set_ylim(0, 5)
+        self.compass_ax.set_yticks(np.arange(0, 5, 1.0))
+        # radar green, solid grid lines
+        plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
+        plt.rc('xtick', labelsize=15)
+        plt.rc('ytick', labelsize=15)
+        plt.ion()
 
     ###########################################################
     # Public Methods
     ###########################################################
 
-    def plot(self, true_loc=None):
+    def plot(self, writer):
         """
         Plots experience map
 
         ..todo::make this better
         """
-        if self.initial_pose is None:
-            self.initial_pose = true_loc
+        self.position_ax.clear()
+        self.compass_ax.clear()
+        self.position_ax.set_xlim([-300, 600])
+        self.position_ax.set_ylim([-300, 600])
+        self.compass_ax.set_ylim(0, 0.02)
+        self.compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
+
+        # POSITION AXIS
+        true_p_adj = rotate(self.true_pose[0] - self.initial_pose[0], degrees=self.initial_pose[1])
+        self.prev_visited.append((true_p_adj[0], true_p_adj[1]))
+        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green")
+        self.position_ax.scatter([t[0] for t in self.prev_visited], [t[1] for t in self.prev_visited], c="pink")
         pos = {e: (e.x_em, e.y_em) for e in self.G.nodes}
         cols = ["#004650" if e==self.current_exp else "#933A16" for e in self.G.nodes]
-        # plots e_m
-        plt.ion()
-        plt.clf()
-        # plt.xlim((-300,300))
-        # plt.ylim((-300, 300))
-        nx.draw(self.G, pos=pos, node_color=cols, node_size=50)
-        #if true_loc is not None:
-            #plt.scatter([true_loc[0] - self.initial_pose[0]], [true_loc[1] - self.initial_pose[1]], c="green")
+        nx.draw(self.G, pos=pos, node_color=cols, node_size=50, ax=self.position_ax)
+
+        # COMPASS AXIS
+        self.compass_ax.arrow(0, 0,
+                             # -5.,5.,
+                             self.true_pose[1], self.true_speed,
+                             alpha=0.5, width=0.1,
+                             edgecolor='black', facecolor='green', lw=1.3, zorder=3)
+        self.compass_ax.arrow(0, 0,
+                              # -5.,5.,
+                              self.accum_th, self.true_speed,
+                              alpha=0.5, width=0.1,
+                              edgecolor='black', facecolor='red', lw=1.3, zorder=3)
+
         plt.pause(0.005)
-        # plots odometry
-        th = self.accum_th
+
+        image = np.frombuffer(plt.gcf().canvas.tostring_rgb(), dtype='uint8')
+        image = image.reshape(plt.gcf().canvas.get_width_height()[::-1] + (3,))
+        writer.append_data(image)
 
     @timethis
-    def step(self, view_cell, translation, rotation, x_pc, y_pc, th_pc):
+    def step(self, view_cell, translation, rotation, x_pc, y_pc, th_pc, true_pose=None, true_odometry=None):
         """
         Execute an iteration of the experience map.
 
@@ -222,8 +259,27 @@ class ExperienceMap(object):
         :param translation: the translation of the robot given by odometry.
         :param rotation: the rotation of the robot given by odometry.
         """
+        if self.initial_pose is None:
+            self.initial_pose = true_pose
+
+        if self.true_pose is None:
+            self.true_speed = 0
+        else:
+            self.true_speed = ((self.true_pose[0][0] - true_pose[0][0])**2 + (self.true_pose[0][1] - true_pose[0][1])**2)**0.5
+        self.true_pose = true_pose
+
+
+        #translation = min(translation*10000,5)
+        #if true_odometry is not None:
+            #print("INFO:: Not using true odometry")
+            #translation = true_odometry[0]
+            #rotation = true_odometry[1]
+
+        print(f"Rotation is {rotation}")
+        print(f"Translation is {translation}")
         # Use translation and rotation to update current position estimates of agent.
-        self.accum_th = self._clip_angle_pi(self.accum_th + rotation)
+        self.accum_th = self._clip_angle_pi(self.accum_th - rotation)
+        #self.accum_th = self._clip_angle_pi(rotation)
         self.accum_diff_x += translation * np.cos(self.accum_th)
         self.accum_diff_y += translation * np.sin(self.accum_th)
         # Get distance between last experience and new location
@@ -297,14 +353,16 @@ class ExperienceMap(object):
                 self.current_exp = matched_exp
                 self.accum_diff_x = 0
                 self.accum_diff_y = 0
-                self.accum_th = self.current_exp.th_em
+                # ..todo: removed this as experiences are no longer all the same theta!
+                #self.accum_th = self.current_exp.th_em
         # Add current experience node to history
         self.history.append(self.current_exp)
         # If we do not need to adjust the map, return.
         if not adjust_map:
             return
         # if we do need to adjust the map, do it now.
-        self._adjust_map()
+
+        #self._adjust_map()
         return
 
     ###########################################################

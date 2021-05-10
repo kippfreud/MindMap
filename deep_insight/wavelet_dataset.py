@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
+import math
+from utils.misc import getspeed
 
 def create_train_and_test_datasets(opts, hdf5_file):
     """
@@ -29,6 +31,11 @@ class WaveletDataset(Dataset):
         self.set_opts_as_attribute(opts)
         # 2.) Load data memmaped for mean/std estimation and fast plotting
         self.wavelets = np.array(hdf5_file['inputs/wavelets'])
+
+        self.last_pos = None
+        self.last_speed = None
+        self.last_ang = None
+        self.prev_ind = None
 
         # Get output(s)
         outputs = []
@@ -53,16 +60,21 @@ class WaveletDataset(Dataset):
         else:
             idx = self.cv_indices[idx]
         cut_range = np.arange(idx, idx + self.sample_size)
+        past_cut_range = np.arange(idx-1,  idx+self.sample_size-1)
         # 2.) Above takes consecutive batches, below takes random batches
         if self.random_batches:
             start_index = np.random.choice(self.cv_indices, size=1)[0]
             cut_range = np.arange(start_index, start_index + self.model_timesteps)
+            past_cut_range = np.arange(start_index-1, start_index+self.model_timesteps-1)
 
         # 3.) Get input sample
         input_sample = self.get_input_sample(cut_range)
 
         # 4.) Get output sample
-        output_sample = self.get_output_sample(cut_range)
+        output_sample = self.get_output_sample(cut_range, past_cut_range)
+
+        self.prev_ind = idx
+        #print(idx)
 
         return (input_sample, output_sample)
 
@@ -109,11 +121,12 @@ class WaveletDataset(Dataset):
 
         return cut_data
 
-    def get_output_sample(self, cut_range):
+    def get_output_sample(self, cut_range, prev_cut_range):
         # 1.) Cut Ephys
         out_sample = []
-        for out in self.outputs:
+        for i, out in enumerate(self.outputs):
             cut_data = out[cut_range, ...]
+            pcd = out[prev_cut_range, ...]
 
             # 3.) Divide evenly and make sure last output is being decoded
 
@@ -121,7 +134,22 @@ class WaveletDataset(Dataset):
             #     cut_data = cut_data[np.arange(0, cut_data.shape[0] + 1, self.average_output)[1::] - 1]
             # out_sample.append(cut_data)
             ## ..todo: replaced above with below: kipp!
-            cut_data = np.mean(cut_data,0)
+            if i == 0:
+                #cut_data_m = np.mean(cut_data,0)
+                cut_data_m = cut_data[-1, :]
+                out_sample.append(cut_data_m)
+
+                pcdm = pcd[-1,:]
+            elif i == 1 or i == 2:
+                # ch_y = bookends[1][1] - bookends[0][1]
+                # ch_x = bookends[1][0] - bookends[0][0]
+                # ang_rad = math.atan2(ch_x, ch_y)
+                # out_sample.append(ang_rad*(180/np.pi))
+                # return angle diff between cut data m and last pos
+                out_sample.append(math.atan2(cut_data_m[1]-pcdm[1], cut_data_m[0]-pcdm[0]))
+            elif i == 3:
+                spd = getspeed(cut_data_m, pcdm)
+                out_sample.append(spd)
 
         return out_sample
 

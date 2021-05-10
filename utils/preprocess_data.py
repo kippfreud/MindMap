@@ -147,7 +147,11 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                                                         output_chunk[key].shape[1]))
                     except:
                         print("oo")
-                    output_chunk[key] = np.mean(output_chunk[key], axis=1)
+                    if key != "position":
+                        output_chunk[key] = np.mean(output_chunk[key], axis=1)
+                    else:
+                        output_chunk[key] = output_chunk["position"][:, round(output_chunk["position"][:].shape[1]/2), :]
+
             for ind, (wavelet_power, wavelet_frequencies, output) in enumerate(par(delayed(wavelet_transform)(raw_chunk[:, i], output_chunk, sampling_rate, average_window, scaling_factor, **args) for i in range(0, raw_chunk.shape[1]))):
                 wavelet_transformed[:, :, ind] = wavelet_power
 
@@ -397,7 +401,7 @@ if __name__ == '__main__':
 
     # wavelets = np.array(hdf5_file['inputs/wavelets'])
     # frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
-    preprocess_input("data/preprocessed_MJ_smoothmove.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
+    preprocess_input("data/grid_world.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
                      average_window=250,
                      channels=list(range(training_options['channels'])))
 

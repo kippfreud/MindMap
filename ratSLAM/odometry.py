@@ -47,7 +47,7 @@ class Odometry(object):
             rotation = self._get_angle_diff(r, self.old_rotation)
 
         # Save input as old input
-        self.old_rotation = rotation
+        self.old_rotation = r
         self.old_input = input
 
         # Update raw odometry
