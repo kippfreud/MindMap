@@ -103,6 +103,6 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/trained_grid_world_500.pt")
+        torch.save(model.state_dict(), f"models/trained_grid_world.pt")
         print("Done!")
         exit(0)
