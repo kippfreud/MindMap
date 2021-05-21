@@ -83,7 +83,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
         hdf5_file.create_dataset("inputs/wavelets", [output_size, num_fourier_frequencies, len(channels)], np.float32)
         hdf5_file.create_dataset("inputs/fourier_frequencies", [num_fourier_frequencies], np.float16)
         hdf5_file.create_dataset("outputs/position", [output_size, 2], np.float32)
-        hdf5_file.create_dataset("outputs/head_direction", [output_size, 1], np.float32)
+        #hdf5_file.create_dataset("outputs/head_direction", [output_size, 1], np.float32)
         hdf5_file.create_dataset("outputs/speed", [output_size, 1], np.float32)
         hdf5_file.create_dataset("outputs/direction", [output_size, 1], np.float32)
         hdf5_file.create_dataset("outputs/direction_delta", [output_size, 1], np.float32)

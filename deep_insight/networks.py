@@ -124,7 +124,6 @@ class Standard_Decoder(nn.Module):
         x = x.permute(0, 1, 4, 2, 3)
         x = self.gaussian_noise(x)
         for step_name in self.conv_order:
-            print(step_name)
             x = getattr(self, step_name)(x)
         flat_x = self.flatten(x)
         outputs = []

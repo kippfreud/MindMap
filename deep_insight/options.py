@@ -4,8 +4,8 @@ Defines options dict for training.
 
 """
 
-NAME = "Felix"
-#NAME="Elliott"
+#NAME = "Felix"
+NAME = "Gerrit"
 UNPROCESSED_MAT_FILE = f"data/{NAME}.mat"
 PROCESSED_H5_FILE = f"data/{NAME}.h5"
 MODEL_FILE = f"models/{NAME}.pt"

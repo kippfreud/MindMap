@@ -140,14 +140,14 @@ class WaveletDataset(Dataset):
                 out_sample.append(cut_data_m)
 
                 pcdm = pcd[-1,:]
-            elif i == 1 or i == 2:
+            elif i == 1:
                 # ch_y = bookends[1][1] - bookends[0][1]
                 # ch_x = bookends[1][0] - bookends[0][0]
                 # ang_rad = math.atan2(ch_x, ch_y)
                 # out_sample.append(ang_rad*(180/np.pi))
                 # return angle diff between cut data m and last pos
                 out_sample.append(math.atan2(cut_data_m[1]-pcdm[1], cut_data_m[0]-pcdm[0]))
-            elif i == 3:
+            elif i == 2:
                 spd = getspeed(cut_data_m, pcdm)
                 out_sample.append(spd)
 

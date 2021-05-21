@@ -38,7 +38,7 @@ if __name__ == '__main__':
     frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
 
     loss_functions = {'position': 'euclidean_loss',
-                      'head_direction': 'cyclical_mae_rad',
+                      #'head_direction': 'cyclical_mae_rad',
                       'direction': 'cyclical_mae_rad',
                       #'direction_delta': 'cyclical_mae_rad',
                       'speed': 'mae'}
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         loss_functions[key] = function_handle
 
     loss_weights = {'position': 1,
-                    'head_direction': 200,  #was 10, tweaked for MJ
+                    #'head_direction': 200,  #was 10, tweaked for MJ
                     'direction': 200,  # was 10, tweaked for MJ
                     #'direction_delta': 10,  # was 10, tweaked for MJ
                     'speed': 50} #was 2 but tweaked for MJ dataset
