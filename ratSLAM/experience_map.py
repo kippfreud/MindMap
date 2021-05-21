@@ -215,16 +215,16 @@ class ExperienceMap(object):
         """
         self.position_ax.clear()
         self.compass_ax.clear()
-        self.position_ax.set_xlim([-300, 600])
-        self.position_ax.set_ylim([-300, 600])
+        self.position_ax.set_xlim([-600, 600])
+        self.position_ax.set_ylim([-600, 600])
         self.compass_ax.set_ylim(0, 0.02)
         self.compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
 
         # POSITION AXIS
         true_p_adj = rotate(self.true_pose[0] - self.initial_pose[0], degrees=self.initial_pose[1])
         self.prev_visited.append((true_p_adj[0], true_p_adj[1]))
-        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green")
         self.position_ax.scatter([t[0] for t in self.prev_visited], [t[1] for t in self.prev_visited], c="pink")
+        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green")
         pos = {e: (e.x_em, e.y_em) for e in self.G.nodes}
         cols = ["#004650" if e==self.current_exp else "#933A16" for e in self.G.nodes]
         nx.draw(self.G, pos=pos, node_color=cols, node_size=50, ax=self.position_ax)

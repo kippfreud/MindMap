@@ -135,7 +135,7 @@ class ViewCells(object):
             print("ERROR: input is not instance of Input class.")
             exit(0)
         # Get similarity scores comparing this data to all others
-        scores = self._get_similarity_scores(input)
+        scores = self._get_similarity_scores(input, pc=(x_pc, y_pc))
         # Decrease the decay value of each view cell
         self._global_decay()
         # Using these scores, we not decide whether to create a new cell,
@@ -183,7 +183,7 @@ class ViewCells(object):
         self.size += 1
         return cell
 
-    def _get_similarity_scores(self, input):
+    def _get_similarity_scores(self, input, pc):
         """
         Computes similarity of the given template to the templates associated with \
         all other view cells
@@ -194,7 +194,9 @@ class ViewCells(object):
         scores = []
         for view_cell in self.cells:
             sim_score = input.compareSimilarity(view_cell.input)
-            scores.append(sim_score)
+            #pc_diff = sum((np.array(pc)-(np.array([view_cell.x_pc,view_cell.y_pc])))**2)**0.5
+            pc_diff = 1
+            scores.append(sim_score*pc_diff)
         return scores
 
     def _should_I_make_new_cell(self, scores):

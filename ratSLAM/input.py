@@ -139,3 +139,54 @@ class MattJonesDummyInput(Input):
         Compares this inputs template to another - returns odometry values in the form (speed, angle in radians)
         """
         return get_odometry(self.template)
+
+# -----------------------------------------------------------------------
+
+class MattJonesInput(Input):
+    """
+    Abstract base class for Matt Jones RatSLAM input. The input data is annotated with truth
+    values for position and angle so we can cheat at loop closure.
+    """
+    def __init__(self, data):
+        """
+        instantiates input wrapper.
+
+        :param data: raw data to be wrapped, should be a 2-tuple with (data, odometry)
+        """
+        if not isinstance(data, tuple):
+            print("ERROR: data should be a 2 element tuple")
+            exit(0)
+        if len(data) != 2:
+            print("ERROR: data should be a 2 element tuple")
+            exit(0)
+        self.raw_data = data
+        self.template = self._getTemplate(data)
+        self.saved_odometry = None
+
+    def _getTemplate(self, data):
+        """
+        Templateizes the raw data, just returns the input data here.
+        """
+        sp, dir, ret = get_odometry(data[0], True)
+        self.saved_odometry = sp, dir
+        return ret
+
+    def compareSimilarity(self, other_data):
+        """
+        Compares this inputs template to another - returns similarity score.
+
+        ..todo: Implement this by cheating!
+        """
+        est_loc = self.template
+        other_est_loc = other_data.template
+        return (sum((est_loc - other_est_loc)**2)**0.5).item()
+
+    def compareOdometry(self, other_template):
+        """
+        Compares this inputs template to another - returns odometry values in the form (speed, angle in radians)
+        """
+        if self.saved_odometry is not None:
+            return self.saved_odometry
+        else:
+            return get_odometry(self.raw_data[0])
+

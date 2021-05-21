@@ -4,7 +4,7 @@ This should perform necessary preprocessing of Matt Jones' data.
 
 #------------------------------------------------------------------------
 
-from deep_insight.options import get_opts
+from deep_insight.options import get_opts, UNPROCESSED_MAT_FILE, PROCESSED_H5_FILE
 import pynwb
 import scipy.io
 import h5py
@@ -95,7 +95,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
 
     outputs = {
         "position": np.array(hdf5_in["Data/Pos"]),
-        "head_direction": np.array(hdf5_in["Data/Theta"]),
+        #"head_direction": np.array(hdf5_in["Data/Theta"]),
         "speed": np.array(hdf5_in["Data/Speed"]),
         "direction": np.array(hdf5_in["Data/Direction"]),
         "direction_delta": np.array(hdf5_in["Data/DirectionDelta"])
@@ -117,7 +117,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
 
             output_chunk = {
                 "position": outputs["position"][start:end],
-                "head_direction": outputs["head_direction"][start:end],
+                #"head_direction": outputs["head_direction"][start:end],
                 "speed": outputs["speed"][start:end],
                 "direction": outputs["direction"][start:end],
                 "direction_delta": outputs["direction_delta"][start:end]
@@ -167,7 +167,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                 this_index_end = wavelet_index_end - index_gap
                 hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[0: -index_gap, :, :]
                 hdf5_file["outputs/position"][this_index_start:this_index_end,:] = output_chunk["position"][0:-index_gap,:]
-                hdf5_file["outputs/head_direction"][this_index_start:this_index_end,:] = output_chunk["head_direction"][0:-index_gap,:]
+                #hdf5_file["outputs/head_direction"][this_index_start:this_index_end,:] = output_chunk["head_direction"][0:-index_gap,:]
                 hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][0:-index_gap, :]
                 hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][0:-index_gap, :]
                 hdf5_file["outputs/speed"][this_index_start:this_index_end,:] = output_chunk["speed"][0:-index_gap,:]
@@ -176,7 +176,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                 this_index_end = wavelet_index_end
                 hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[index_gap::, :, :]
                 hdf5_file["outputs/position"][this_index_start:this_index_end, :] = output_chunk["position"][index_gap::, :]
-                hdf5_file["outputs/head_direction"][this_index_start:this_index_end, :] = output_chunk["head_direction"][index_gap::, :]
+                #hdf5_file["outputs/head_direction"][this_index_start:this_index_end, :] = output_chunk["head_direction"][index_gap::, :]
                 hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][index_gap::, :]
                 hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][index_gap::, :]
                 hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = output_chunk["speed"][index_gap::, :]
@@ -186,7 +186,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                 hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[index_gap: -index_gap, :, :]
 
                 hdf5_file["outputs/position"][this_index_start:this_index_end, :] = output_chunk["position"][index_gap:-index_gap, :]
-                hdf5_file["outputs/head_direction"][this_index_start:this_index_end, :] = output_chunk["head_direction"][index_gap:-index_gap, :]
+                #hdf5_file["outputs/head_direction"][this_index_start:this_index_end, :] = output_chunk["head_direction"][index_gap:-index_gap, :]
                 hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][index_gap:-index_gap, :]
                 hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][index_gap:-index_gap, :]
                 hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = output_chunk["speed"][index_gap:-index_gap, :]
@@ -394,14 +394,14 @@ if __name__ == '__main__':
 
     if USE_WANDB: wandb.init(project="my-project")
 
-    HDF5_PATH = 'data/data.mat'
+    HDF5_PATH = UNPROCESSED_MAT_FILE
     hdf5_file = h5py.File(HDF5_PATH, mode='r')
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
     training_options = get_opts(HDF5_PATH, train_test_times=(np.array([]), np.array([])))
 
     # wavelets = np.array(hdf5_file['inputs/wavelets'])
     # frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
-    preprocess_input("data/grid_world.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
+    preprocess_input(PROCESSED_H5_FILE, hdf5_file, sampling_rate=training_options['sampling_rate'],
                      average_window=250,
                      channels=list(range(training_options['channels'])))
 

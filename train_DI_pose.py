@@ -5,7 +5,7 @@ Runs training for deepInsight
 """
 # -----------------------------------------------------------------------
 
-from deep_insight.options import get_opts
+from deep_insight.options import get_opts, PROCESSED_H5_FILE, MODEL_FILE
 from deep_insight.wavelet_dataset import create_train_and_test_datasets, WaveletDataset
 from deep_insight.trainer import Trainer
 import deep_insight.loss
@@ -23,6 +23,7 @@ if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
 else:
     DEVICE = torch.device("cpu")
+    print("WARNING: TRAINING ON CPU!!")
 USE_WANDB = True
 
 if __name__ == '__main__':
@@ -30,7 +31,8 @@ if __name__ == '__main__':
     if USE_WANDB: wandb.init(project="my-project")
 
     #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-    PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
+    PREPROCESSED_HDF5_PATH = PROCESSED_H5_FILE
+
     hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
     wavelets = np.array(hdf5_file['inputs/wavelets'])
     frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
@@ -103,6 +105,6 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/trained_grid_world.pt")
+        torch.save(model.state_dict(), MODEL_FILE)
         print("Done!")
         exit(0)

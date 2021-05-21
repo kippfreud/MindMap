@@ -4,6 +4,12 @@ Defines options dict for training.
 
 """
 
+NAME = "Felix"
+#NAME="Elliott"
+UNPROCESSED_MAT_FILE = f"data/{NAME}.mat"
+PROCESSED_H5_FILE = f"data/{NAME}.h5"
+MODEL_FILE = f"models/{NAME}.pt"
+
 def get_opts(fp_hdf_out, train_test_times):
     """
     Returns the options dictionary which contains all parameters needed to train the model

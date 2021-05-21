@@ -5,6 +5,7 @@ Runs training for deepInsight
 """
 # -----------------------------------------------------------------------
 
+from deep_insight.options import get_opts, PROCESSED_H5_FILE, MODEL_FILE
 from deep_insight.options import get_opts
 from deep_insight.wavelet_dataset import create_train_and_test_datasets, WaveletDataset
 from deep_insight.trainer import Trainer
@@ -12,6 +13,7 @@ import deep_insight.loss
 import deep_insight.networks
 import os
 import matplotlib.pyplot as plt
+from utils.plotting import circular_hist
 import h5py
 import numpy as np
 import torch
@@ -29,8 +31,12 @@ else:
 takeout = False
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
-MODEL_PATH = 'models/trained_grid_world_500.pt'
+#
+# PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
+# MODEL_PATH = 'models/grid_world.pt'
+
+PREPROCESSED_HDF5_PATH = PROCESSED_H5_FILE
+MODEL_PATH = MODEL_FILE
 
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
@@ -126,8 +132,11 @@ ALL_SP = []
 ALL_THE = []
 ALL_SPE = []
 
-with imageio.get_writer('test.gif', mode='I') as writer:
+BI = 0
+with imageio.get_writer('DEL.gif', mode='I') as writer:
     for batch, labels in test_loader:
+        BI += 1
+
         logits = model(batch)
 
         position_ests = list(logits[0])
@@ -213,12 +222,14 @@ with imageio.get_writer('test.gif', mode='I') as writer:
             image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
             image = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
             writer.append_data(image)
-
+        # if BI > 150:
+        #     break
     pos_losses.append( training_options['loss_functions']['position'](labels[0], logits[0]).mean().detach().numpy().item() )
     hd_losses.append(
         training_options['loss_functions']['head_direction'](labels[0], logits[0]).mean().detach().numpy().item())
     speed_losses.append(
         training_options['loss_functions']['speed'](labels[0], logits[0]).mean().detach().numpy().item())
+
 
     # for i in range(len(position)):
     #     for j in range(len(list(position[i]))):
@@ -230,6 +241,43 @@ with imageio.get_writer('test.gif', mode='I') as writer:
 pos_losses = torch.tensor(pos_losses)
 hd_losses = torch.tensor(hd_losses)
 speed_losses = torch.tensor(speed_losses)
+
+CLASS_1 = [ALL_THE[i] for i in range(len(ALL_THE)) if ALL_TH[i] < (np.pi/5) or ALL_TH[i] > (2*np.pi-np.pi/5)]
+CLASS_2 = [ALL_THE[i] for i in range(len(ALL_THE)) if ALL_TH[i] > (np.pi/2)-(np.pi/5) and ALL_TH[i] < (np.pi/2)+(np.pi/5)]
+CLASS_3 = [ALL_THE[i] for i in range(len(ALL_THE)) if ALL_TH[i] > np.pi-(np.pi/5) and ALL_TH[i] < np.pi+(np.pi/5)]
+CLASS_4 = [ALL_THE[i] for i in range(len(ALL_THE)) if ALL_TH[i] > (-.5*np.pi)-(np.pi/4) and ALL_TH[i] < (-.5*np.pi)+(np.pi/4)]
+
+# Construct figure and axis to plot on
+fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection='polar'))
+#circular_hist(ax[0], np.array(CLASS_1))
+circular_hist(ax, np.array(CLASS_1), offset=0, density=False, bins=1000)
+extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+# Pad the saved area by 10% in the x-direction and 20% in the y-direction
+fig.savefig('C1.png', bbox_inches=extent.expanded(1.1, 1.2))
+
+# Construct figure and axis to plot on
+fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection='polar'))
+#circular_hist(ax[0], np.array(CLASS_1))
+circular_hist(ax, np.array(CLASS_2), offset=0, density=False, bins=1000)
+extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+# Pad the saved area by 10% in the x-direction and 20% in the y-direction
+fig.savefig('C2.png', bbox_inches=extent.expanded(1.1, 1.2))
+
+# Construct figure and axis to plot on
+fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection='polar'))
+#circular_hist(ax[0], np.array(CLASS_1))
+circular_hist(ax, np.array(CLASS_3), offset=0, density=False, bins=1000)
+extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+# Pad the saved area by 10% in the x-direction and 20% in the y-direction
+fig.savefig('C3.png', bbox_inches=extent.expanded(1.1, 1.2))
+
+# Construct figure and axis to plot on
+fig, ax = plt.subplots(1, 1, subplot_kw=dict(projection='polar'))
+#circular_hist(ax[0], np.array(CLASS_1))
+circular_hist(ax, np.array(CLASS_4), offset=0, density=False, bins=1000)
+extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+# Pad the saved area by 10% in the x-direction and 20% in the y-direction
+fig.savefig('C4.png', bbox_inches=extent.expanded(1.1, 1.2))
 
 print(f"Position loss: {pos_losses.mean()}")
 print(f"HD loss: {hd_losses.mean()}")

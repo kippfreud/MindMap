@@ -64,7 +64,7 @@ class RatSLAM(object):
         x_pc, y_pc, th_pc = self.pose_cells.active_cell
         #print(f"Current pose index is {x_pc}, {y_pc}, {th_pc}")
         # Get activated view cell
-        view_cell = self.view_cells.observe_data(input, x_pc, y_pc, th_pc)
+        view_cell = self.view_cells.observe_data(input, x_pc, y_pc,th_pc)
         # Get odometry readings
         vtrans, vrot = self.odometry.observe_data(input, absolute_rot=self.absolute_rot)
         # if vtrans < 1:

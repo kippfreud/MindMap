@@ -37,7 +37,7 @@ if __name__ == "__main__":
     #                               )
     x = []
     y = []
-    with imageio.get_writer('NeuroSLAM-Full.gif', mode='I') as writer:
+    with imageio.get_writer('NeuroSLAM-Full-J.gif', mode='I') as writer:
         for i, d in enumerate(data):
             print(i)
             if i > 1000:
