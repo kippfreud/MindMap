@@ -76,10 +76,13 @@ MODEL = model_function(train_dataset, show_summary=False)
 MODEL.load_state_dict(torch.load(MODEL_PATH))
 MODEL.eval()
 
-def get_odometry(data):
+def get_odometry(data, ret_loc=False):
     tansor = torch.from_numpy(data).unsqueeze(0)
     logits = MODEL(tansor)
     position_ests = list(logits[0])[0]
     angle_ests = list(logits[2])[0]
     speed_ests = list(logits[3])[0]
-    return speed_ests[0].item(), angle_ests.item() #* (np.pi /180.)
+    if ret_loc == False:
+        return speed_ests[0].item(), angle_ests.item() #* (np.pi /180.)
+    else:
+        return speed_ests[0].item(), angle_ests.item(), [p.item() for p in position_ests]

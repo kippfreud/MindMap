@@ -1,5 +1,5 @@
 """
-File for Odometry class.
+Contains odometry module
 """
 
 # -----------------------------------------------------------------------
@@ -23,7 +23,6 @@ class Odometry(object):
         self.odometry = [0., 0., 0.]
 
         # Instantiate initial templates for translation and rotation
-
         self.old_input = None
         self.old_rotation = None
 
@@ -45,26 +44,21 @@ class Odometry(object):
             rotation = r
         else:
             rotation = self._get_angle_diff(r, self.old_rotation)
-
         # Save input as old input
         self.old_rotation = r
         self.old_input = input
-
         # Update raw odometry
-        #..todo:: ALSO NOT VALID FOR NEW NEURAL RATSLAM!
         if absolute_rot:
             self.odometry[2] = rotation
         else:
             self.odometry[2] += rotation
-
         self.odometry[0] += translation * np.cos(self.odometry[2])
         self.odometry[1] += translation * np.sin(self.odometry[2])
-
         return translation, rotation
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Private Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     def _get_odometry(self, input):
         """

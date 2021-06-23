@@ -1,5 +1,5 @@
 """
-Trainer for the deep insight decoder
+Trainer for the deep insight decoder.
 """
 # --------------------------------------------------------------
 
@@ -56,20 +56,10 @@ class Trainer(object):
                 batch = batch.to(self.device)
                 for i in range(len(labels)):
                     labels[i] = labels[i].to(self.device)
-                # labels = labels.to(self.device)
                 data_load_end_time = time.time()
 
-                ## TASK 1: Compute the forward pass of the model, print the output shape
-                ##         and quit the program
-                output = self.model.forward(batch)
+                logits = self.model.forward(batch)
 
-                ## TASK 7: Rename `output` to `logits`, remove the output shape printing
-                ##         and get rid of the `import sys; sys.exit(1)`
-                logits = output
-
-                ## TASK 9: Compute the loss using self.criterion and
-                ##         store it in a variable called `loss`
-                #loss = self.criterion(logits, labels)
                 losses = torch.tensor([]).to(self.device)
                 for ind, logit in enumerate(logits):
                     loss_func = list(self.criterion[0].values())[ind]
@@ -82,46 +72,44 @@ class Trainer(object):
                             loss_func(logit, labels[ind]) ,
                             loss_weight
                         )
-                    if self.use_wandb: wandb.log({'epoch': epoch, f'Training_Loss_{loss_key}': torch.sum(l)})
-                    if self.use_wandb: wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.sum(l)})
+                    if self.use_wandb:
+                        wandb.log({'epoch': epoch, f'Training_Loss_{loss_key}': torch.sum(l)})
+                        wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.sum(l)})
                     losses = torch.cat((
                         losses,
                         l
                     ))
                 loss = torch.sum(losses)
                 print(f"Loss = {loss}")
-                if self.use_wandb: wandb.log({'epoch': epoch, 'Training_Loss_Total': loss})
-                if self.use_wandb: wandb.log({'step': self.step, 'Training_Loss_Total': loss})
-                ## TASK 10: Compute the backward pass
-                # Now we compute the backward pass, which populates the `.grad` attributes of the parameters
+                if self.use_wandb:
+                    wandb.log({'epoch': epoch, 'Training_Loss_Total': loss})
+                    wandb.log({'step': self.step, 'Training_Loss_Total': loss})
+
                 loss.backward()
 
-                ## TASK 12: Step the optimizer and then zero out the gradient buffers.
                 self.optimizer.step()
                 self.optimizer.zero_grad()
                 self.epoch = epoch
 
                 self.step += 1
 
-            if ((self.step + 1) % self.train_loader.dataset.validation_steps) == 0:
+            if ((self.epoch + 1) % self.train_loader.dataset.validation_steps) == 0:
                 self.validate()
-                    # self.validate() will put the model in validation mode,
-                    # so we have to switch back to train mode afterwards
+            # self.validate() will put the model in validation mode,
+            # so we have to switch back to train mode afterwards
             self.model.train()
 
     def validate(self):
-        # results = {"preds": [], "labels": []}
-        results = {}
         total_loss = 0
+        total_loss_key = {}
         self.model.eval()
         print("Validating")
-        # No need to track gradients for validation, we're not optimizing.
+        # No need to track gradients for validation as we're not optimizing.
         with torch.no_grad():
             for batch, labels in self.val_loader:
                 batch = batch.to(self.device)
                 for i in range(len(labels)):
                     labels[i] = labels[i].to(self.device)
-                #labels = labels.to(self.device)
                 logits = self.model(batch)
                 losses = torch.tensor([]).to(self.device)
                 for ind, logit in enumerate(logits):
@@ -135,6 +123,10 @@ class Trainer(object):
                             loss_func(logit, labels[ind]),
                             loss_weight
                         )
+                    if loss_key in total_loss_key:
+                        total_loss_key[loss_key] += torch.sum(l)
+                    else:
+                        total_loss_key[loss_key] = torch.sum(l)
                     if self.use_wandb:
                         wandb.log({'step': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
                         wandb.log({'epoch': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
@@ -147,6 +139,8 @@ class Trainer(object):
 
         if self.use_wandb: wandb.log({'step': self.step, 'Validation_Loss_Total': total_loss})
         print(f"Total Loss: {total_loss}")
+        for k in total_loss_key.keys():
+            print(f"Total Loss {k}: {total_loss_key[k]}")
 
 
     @staticmethod

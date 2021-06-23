@@ -1,17 +1,13 @@
 """
-This will perform the RatSLAM algorithm on the video file given in ...
-
+This will perform the RatSLAM algorithm on the data specified in options.py
 """
 
 # -----------------------------------------------------------------------
 
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import imageio
 
-from ratSLAM.data_simulation import generate_dummy_dataset
 from ratSLAM.ratSLAM import RatSLAM
-from ratSLAM.input import DummyInput
 from ratSLAM.utilities import showTiming
 from utils.get_MJ_dataset import get_mj_dataset
 from utils.logger import root_logger
@@ -39,7 +35,6 @@ if __name__ == "__main__":
     y = []
     with imageio.get_writer('NeuroSLAM-Full.gif', mode='I') as writer:
         for i, d in enumerate(data):
-            print(i)
             if i > 1000:
                 break
             slam.step(d)
@@ -48,4 +43,5 @@ if __name__ == "__main__":
     plt.scatter(x,y)
     plt.show()
     showTiming()
-    print("done")
+    print("Finished!")
+    exit(0)

@@ -74,7 +74,7 @@ class DummyInput(Input):
 
     def _getTemplate(self, data):
         """
-        Templateizes the raw data, returns template.
+        Template-izes the raw data, returns template.
         """
         return data[0]
 
@@ -121,8 +121,8 @@ class MattJonesDummyInput(Input):
     def compareSimilarity(self, other_data):
         """
         Compares this inputs template to another - returns similarity score.
-
-        ..todo: Implement this by cheating!
+        This dummy version is cheating, and uses true location and angle labels.
+        See class below for non-cheating class.
         """
         current_loc = self.raw_data[1][0]
         current_ang = self.raw_data[1][1]
@@ -131,8 +131,6 @@ class MattJonesDummyInput(Input):
         loc_diff = ( (current_loc[0] - other_loc[0])**2 + (current_loc[1] - other_loc[1])**2 ) ** 0.5
         ang_diff = np.abs(current_ang - other_ang)*(np.pi/180.)
         return loc_diff + ang_diff
-        #return 1.
-
 
     def compareOdometry(self, other_template):
         """
@@ -142,7 +140,7 @@ class MattJonesDummyInput(Input):
 
 # -----------------------------------------------------------------------
 
-class MattJonesDummy(Input):
+class MattJonesInput(Input):
     """
     Matt Jones RatSLAM input.
     """
@@ -159,6 +157,7 @@ class MattJonesDummy(Input):
             print("ERROR: data should be a 2 element tuple")
             exit(0)
         self.raw_data = data
+        self.odom = None
         self.template = self._getTemplate(data)
 
     def _getTemplate(self, data):
@@ -170,21 +169,19 @@ class MattJonesDummy(Input):
     def compareSimilarity(self, other_data):
         """
         Compares this inputs template to another - returns similarity score.
-
-        ..todo: Implement this by cheating!
         """
-        current_loc = self.raw_data[1][0]
-        current_ang = self.raw_data[1][1]
-        other_loc = other_data.raw_data[1][0]
-        other_ang = other_data.raw_data[1][1]
+        if self.odom is None:
+            self.odom = get_odometry(self.template, True)
+        current_loc = self.odom[2]
+        other_loc = other_data.odom[2]
         loc_diff = ( (current_loc[0] - other_loc[0])**2 + (current_loc[1] - other_loc[1])**2 ) ** 0.5
-        ang_diff = np.abs(current_ang - other_ang)*(np.pi/180.)
-        return loc_diff + ang_diff
-        #return 1.
-
+        return loc_diff
 
     def compareOdometry(self, other_template):
         """
         Compares this inputs template to another - returns odometry values in the form (speed, angle in radians)
         """
-        return get_odometry(self.template)
+        if self.odom is None:
+            speed, angle, pos = get_odometry(self.template, True)
+            self.odom = (speed, angle, pos)
+        return self.odom[0], self.odom[1]

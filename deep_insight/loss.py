@@ -1,9 +1,13 @@
 """
-Custom losses for training
+Custom loss functions for training
 """
+
+# -----------------------------------------------------------------------
 
 import torch
 import numpy as np
+
+# -----------------------------------------------------------------------
 
 def euclidean_loss(y_true, y_pred):
     res = torch.sqrt(torch.sum(torch.square(y_pred - y_true), axis=-1))

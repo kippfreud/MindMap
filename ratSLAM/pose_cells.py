@@ -1,5 +1,5 @@
 """
-Class containing pose cell information.
+File containing pose cell module.
 """
 
 # -----------------------------------------------------------------------
@@ -13,7 +13,7 @@ from ratSLAM.utilities import timethis
 
 class PoseCells(object):
     """
-    Pose Cell Module
+    Pose Cell Module.
     """
     def __init__(self,
                  x_dim,
@@ -69,9 +69,9 @@ class PoseCells(object):
         self.th_sin_lookup = np.sin(np.multiply(range(1, self.dims[2] + 1), (2 * np.pi) / self.dims[2]))
         self.th_cos_lookup = np.cos(np.multiply(range(1, self.dims[2] + 1), (2 * np.pi) / self.dims[2]))
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Public Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     @timethis
     def step(self, view_cell, vtrans, vrot):
@@ -87,7 +87,6 @@ class PoseCells(object):
         # view cell) then add energy to the pose cell associated to that view cell
         if not view_cell.new_view_cell:
             # get indexes of activated pose cell (i.e fix dims between 0 and max)
-            # ..todo: is this necessary? why not just act_x = view_cel.x_pc etc?
             act_x = np.min([np.max([int(np.floor(view_cell.x_pc)), 1]), self.dims[0]])
             act_y = np.min([np.max([int(np.floor(view_cell.y_pc)), 1]), self.dims[1]])
             act_th = np.min([np.max([int(np.floor(view_cell.th_pc)), 1]), self.dims[2]])
@@ -111,8 +110,6 @@ class PoseCells(object):
     def _inject_energy(self, cell, x, y, th):
         """
         This will inject some energy into the pose cell attractor network.
-
-        ..todo: currently taken from openratslam - unclear why declared variables are hardcoded
 
         :param cell: The view cell which has activated the pose cell of given index.
         :param x: x index of activated pose cell.
@@ -212,10 +209,6 @@ class PoseCells(object):
         Finds the x,y,th center of activation in the network, uses weighted
         average (with wrapping) to calculate.
 
-        ..todo: Did not thoroughly read this function.
-
-        ..todo: Better comments in this function
-
         :return: (x,y,th) coords.
         """
         x, y, z = np.unravel_index(np.argmax(self.cells), self.cells.shape)
@@ -252,11 +245,6 @@ class PoseCells(object):
     def _path_integration(self, translation, rotation):
         """
         Will move activation in network according to the given translation and rotation.
-
-        ..todo: the maths behind the activity matrix is transformed is difficult to \
-            understand, spend more time understanding it.
-
-        ..todo: better comments in this function
         """
         # PART 1: Transform activity matrix according to translation
         # Calculate size of the directional bins

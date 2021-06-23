@@ -41,9 +41,9 @@ class ViewCell(object):
         # Keep track of the experiences associated with the view cell.
         self._associated_experience_nodes = []
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Public Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     def get_experience(self, index):
         """
@@ -99,7 +99,6 @@ class ViewCell(object):
 
 # -----------------------------------------------------------------------
 
-
 class ViewCells(object):
     """
     View Cell Module
@@ -112,12 +111,12 @@ class ViewCells(object):
         self.cells = []
         self.active_cell = None
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Public Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     @timethis
-    def observe_data(self, input, x_pc, y_pc, th_pc):#
+    def observe_data(self, input, x_pc, y_pc, th_pc):
         """
         Observe data, either
         - Add new view cell and strengthen it's connections to currently /
@@ -165,9 +164,9 @@ class ViewCells(object):
             self.active_cell = cell
             return cell
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Private Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     def _create_cell(self, input, x_pc, y_pc, th_pc):
         """
@@ -206,8 +205,6 @@ class ViewCells(object):
         and all data templates associated with currently existing view cells.
         :return: True if we should create a new view cell, False otherwise.
         """
-        #..todo:: AGAIN, TAKEN FROM ORIGINAL RATSLAM-PYTHON WITH MINOR ALTERATION, NOT VERY GOOD!
-        #..todo:: THRESHOLD SHOULD INCREASE WITH NUMBER OF VIEW CELLS.
         if self.size == 0:
             return True
         if np.min(scores) > 20: #..todo: global param

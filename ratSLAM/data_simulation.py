@@ -1,17 +1,14 @@
 """
 This will generate a DummyInput dataset of a rat travelling in a perfect square.
 Given noise parameters inform how noisy odometry readings will be.
-
+This is for testing purposes.
 """
 
 # -----------------------------------------------------------------------
 
-import cv2
 import numpy as np
 
-from ratSLAM.ratSLAM import RatSLAM
 from ratSLAM.input import DummyInput
-from ratSLAM.utilities import showTiming
 
 #------------------------------------------------------------------------
 

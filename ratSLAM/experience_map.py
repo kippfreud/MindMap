@@ -1,5 +1,5 @@
 """
-Class containing experience map functionality.
+Contains experience map module.
 """
 
 # -----------------------------------------------------------------------
@@ -7,7 +7,6 @@ Class containing experience map functionality.
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
-import imageio
 
 from ratSLAM.utilities import timethis
 from utils.misc import rotate
@@ -42,9 +41,9 @@ class ExperienceNode(object):
         self.view_cell = view_cell
         self.links = []
 
-    ###########################################################
+    # --------------------------------------------------------
     # Public Methods
-    ###########################################################
+    # --------------------------------------------------------
 
     def link_to(self, child, diff_x, diff_y, theta):
         """
@@ -65,9 +64,9 @@ class ExperienceNode(object):
         link = ExperienceLink(self, child, absolute_th, dist, relative_th)
         self.links.append(link)
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Private Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     def _get_angle_diff(self, angle1, angle2):
         """
@@ -120,6 +119,7 @@ class ExperienceNode(object):
             angle -= 2 * np.pi
         return angle
 
+# -----------------------------------------------------------------------
 
 class ExperienceLink(object):
     """
@@ -141,6 +141,7 @@ class ExperienceLink(object):
         self.absolute_th = absolute_th
         self.relative_th = relative_th
 
+# -----------------------------------------------------------------------
 
 class ExperienceMap(object):
     """
@@ -158,7 +159,8 @@ class ExperienceMap(object):
             required to create new experience node.
         :param graph_relaxation_cycles: The number of complete experience map \
             graph relaxation cycles to perform per iteration
-        :param correction_rate: ..todo: add docs for this.
+        :param correction_rate: How much to correct graph upon loop closure - see \
+            _adjust_map function
         """
         # Instantiate networkX graph object
         self.G = nx.Graph()
@@ -203,15 +205,15 @@ class ExperienceMap(object):
         plt.rc('ytick', labelsize=15)
         plt.ion()
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Public Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     def plot(self, writer):
         """
         Plots experience map
 
-        ..todo::make this better
+        ..todo:: improve this so axis do not have to be preset
         """
         self.position_ax.clear()
         self.compass_ax.clear()
@@ -221,7 +223,8 @@ class ExperienceMap(object):
         self.compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
 
         # POSITION AXIS
-        true_p_adj = rotate(self.true_pose[0] - self.initial_pose[0], degrees=self.initial_pose[1])
+        true_p_adj = rotate(self.true_pose[0]-self.initial_pose[0],
+                            degrees=self.initial_pose[1])
         self.prev_visited.append((true_p_adj[0], true_p_adj[1]))
         self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green")
         self.position_ax.scatter([t[0] for t in self.prev_visited], [t[1] for t in self.prev_visited], c="pink")
@@ -261,20 +264,11 @@ class ExperienceMap(object):
         """
         if self.initial_pose is None:
             self.initial_pose = true_pose
-
         if self.true_pose is None:
             self.true_speed = 0
         else:
             self.true_speed = ((self.true_pose[0][0] - true_pose[0][0])**2 + (self.true_pose[0][1] - true_pose[0][1])**2)**0.5
         self.true_pose = true_pose
-
-
-        #translation = min(translation*10000,5)
-        #if true_odometry is not None:
-            #print("INFO:: Not using true odometry")
-            #translation = true_odometry[0]
-            #rotation = true_odometry[1]
-
         print(f"Rotation is {rotation}")
         print(f"Translation is {translation}")
         # Use translation and rotation to update current position estimates of agent.
@@ -296,8 +290,6 @@ class ExperienceMap(object):
         # If we have moved above a threshold distance from the previous experience node,
         # or if the currently active view cell is new and thus has no corresponding
         # experience, we will create one.
-        # ..todo: I do not believe the second part of this logical is necessary. \
-        #       it uses dist threshold for 2 separate things and is never triggered here usefully (so far).
         if view_cell.get_num_associated_experiences() == 0 or distance > self._dist_threshold:
             # Make a new experience
             exp = self._create_experience(x_pc, y_pc, th_pc, view_cell)
@@ -327,9 +319,9 @@ class ExperienceMap(object):
                 distances_from_center.append(distance)
                 if distance < self._dist_threshold:
                     num_candidate_matches += 1
-            # Currently there is no implementation for when there are multiple matching nodes
-            # ..todo: Implement an algorithm for dealing with this situation
             if num_candidate_matches > 1:
+                # Currently there is no implementation for when there are multiple matching nodes
+                # ..todo: Implement an algorithm for dealing with this situation, though it rarely happens
                 print("WARNING: Multiple matching experience nodes, no implementation for dealing with this")
             else:
                 # If there is at most one candidate experience node match
@@ -353,21 +345,19 @@ class ExperienceMap(object):
                 self.current_exp = matched_exp
                 self.accum_diff_x = 0
                 self.accum_diff_y = 0
-                # ..todo: removed this as experiences are no longer all the same theta!
-                #self.accum_th = self.current_exp.th_em
         # Add current experience node to history
         self.history.append(self.current_exp)
         # If we do not need to adjust the map, return.
         if not adjust_map:
             return
         # if we do need to adjust the map, do it now.
-
+        #..todo: reimplement map adjustment
         #self._adjust_map()
         return
 
-    ###########################################################
+    # ---------------------------------------------------------
     # Private Methods
-    ###########################################################
+    # ---------------------------------------------------------
 
     def _adjust_map(self):
         """

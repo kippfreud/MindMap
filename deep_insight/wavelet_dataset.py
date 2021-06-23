@@ -1,14 +1,16 @@
+"""
+Modules for wavelet image datasets.
+"""
+
+# -----------------------------------------------------------------------
+
 from __future__ import print_function, division
-import os
-import torch
-import pandas as pd
-from skimage import io, transform
 import numpy as np
-import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
+from torch.utils.data import Dataset
 import math
 from utils.misc import getspeed
+
+# -----------------------------------------------------------------------
 
 def create_train_and_test_datasets(opts, hdf5_file):
     """
@@ -21,23 +23,21 @@ def create_train_and_test_datasets(opts, hdf5_file):
 
     return training_generator, testing_generator
 
+# -----------------------------------------------------------------------
+
 class WaveletDataset(Dataset):
     """
-    Dataset containing raw wavelet sequence; __getitem__ returns an (input, output) pair.
-    ..todo: better docs
+    Dataset containing raw wavelet sequence, __getitem__ returns an (input, output) pair.
     """
     def __init__(self, opts, hdf5_file, training):
         # 1.) Set all options as attributes
         self.set_opts_as_attribute(opts)
         # 2.) Load data memmaped for mean/std estimation and fast plotting
         self.wavelets = np.array(hdf5_file['inputs/wavelets'])
-
         self.last_pos = None
         self.last_speed = None
         self.last_ang = None
         self.prev_ind = None
-
-        # Get output(s)
         outputs = []
         # the loss function dict has a key representing each output - loop through them and
         # get the outputs
@@ -45,7 +45,6 @@ class WaveletDataset(Dataset):
             tmp_out = hdf5_file['outputs/' + key]
             outputs.append(tmp_out)
         self.outputs = [np.array(o) for o in outputs]
-
         # 3.) Prepare for training
         self.training = training
         self.prepare_data_generator(training=training)
@@ -54,7 +53,6 @@ class WaveletDataset(Dataset):
         return len(self.cv_indices)
 
     def __getitem__(self, idx):
-        og_ix = idx
         # 1.) Define start and end index
         if self.shuffle:
             idx = np.random.choice(self.cv_indices)
@@ -67,19 +65,11 @@ class WaveletDataset(Dataset):
             start_index = np.random.choice(self.cv_indices, size=1)[0]
             cut_range = np.arange(start_index, start_index + self.model_timesteps)
             past_cut_range = np.arange(start_index-1, start_index+self.model_timesteps-1)
-
         # 3.) Get input sample
         input_sample = self.get_input_sample(cut_range)
-
         # 4.) Get output sample
         output_sample = self.get_output_sample(cut_range, past_cut_range)
-
         self.prev_ind = idx
-
-        # if output_sample[0][0] > 400:
-        #     return self.__getitem__(og_ix)
-        #
-        # output_sample[0] = np.array([-1,-1])
         return (input_sample, output_sample)
 
     # -------------------------------------------------------------------------
@@ -110,19 +100,16 @@ class WaveletDataset(Dataset):
             setattr(self, k, v)
 
     def get_input_sample(self, cut_range):
-        # 1.) Cut Ephys / fancy indexing for memmap is planned, if fixed use: cut_data = self.wavelets[cut_range, self.fourier_frequencies, self.channels]
+        # 1.) Cut Ephys / fancy indexing for memmap is planned, if fixed use:
+        # cut_data = self.wavelets[cut_range, self.fourier_frequencies, self.channels]
         cut_data = self.wavelets[cut_range, :, :]
-
         # 2.) Normalize input
         cut_data = (cut_data - self.est_mean) / self.est_std
-
         # 3.) Reshape for model input
         #cut_data = np.reshape(cut_data, (self.batch_size, self.model_timesteps, cut_data.shape[1], cut_data.shape[2]))
-
         # 4.) Take care of optional settings
         cut_data = np.transpose(cut_data, axes=(2, 0, 1))
         cut_data = cut_data[..., np.newaxis]
-
         return cut_data
 
     def get_output_sample(self, cut_range, prev_cut_range):
@@ -131,43 +118,29 @@ class WaveletDataset(Dataset):
         for i, out in enumerate(self.outputs):
             cut_data = out[cut_range, ...]
             pcd = out[prev_cut_range, ...]
-
             # 3.) Divide evenly and make sure last output is being decoded
-
-            # if self.average_output:
-            #     cut_data = cut_data[np.arange(0, cut_data.shape[0] + 1, self.average_output)[1::] - 1]
-            # out_sample.append(cut_data)
-            ## ..todo: replaced above with below: kipp!
             if i == 0:
                 #cut_data_m = np.mean(cut_data,0)
                 cut_data_m = cut_data[-1, :]
                 out_sample.append(cut_data_m)
-
                 pcdm = pcd[-1,:]
             elif i == 1 or i == 2:
-                # ch_y = bookends[1][1] - bookends[0][1]
-                # ch_x = bookends[1][0] - bookends[0][0]
-                # ang_rad = math.atan2(ch_x, ch_y)
-                # out_sample.append(ang_rad*(180/np.pi))
-                # return angle diff between cut data m and last pos
                 out_sample.append(math.atan2(cut_data_m[1]-pcdm[1], cut_data_m[0]-pcdm[0]))
             elif i == 3:
                 spd = getspeed(cut_data_m, pcdm)
                 out_sample.append(spd)
-
         return out_sample
 
 class WaveletDatasetFrey(Dataset):
     """
-    Dataset containing raw wavelet sequence; __getitem__ returns an (input, output) pair.
-    ..todo: better docs
+    Dataset containing raw wavelet sequence, designed for Frey data;
+    __getitem__ returns an (input, output) pair.
     """
     def __init__(self, opts, hdf5_file, training):
         # 1.) Set all options as attributes
         self.set_opts_as_attribute(opts)
         # 2.) Load data memmaped for mean/std estimation and fast plotting
         self.wavelets = np.array(hdf5_file['inputs/wavelets'])
-
         # Get output(s)
         outputs = []
         # the loss function dict has a key representing each output - loop through them and
@@ -176,7 +149,6 @@ class WaveletDatasetFrey(Dataset):
             tmp_out = hdf5_file['outputs/' + key]
             outputs.append(tmp_out)
         self.outputs = [np.array(o) for o in outputs]
-
         # 3.) Prepare for training
         self.training = training
         self.prepare_data_generator(training=training)
@@ -195,13 +167,10 @@ class WaveletDatasetFrey(Dataset):
         if self.random_batches:
             start_index = np.random.choice(self.cv_indices, size=1)[0]
             cut_range = np.arange(start_index, start_index + self.model_timesteps)
-
         # 3.) Get input sample
         input_sample = self.get_input_sample(cut_range)
-
         # 4.) Get output sample
         output_sample = self.get_output_sample(cut_range)
-
         return (input_sample, output_sample)
 
     # -------------------------------------------------------------------------
@@ -234,17 +203,11 @@ class WaveletDatasetFrey(Dataset):
     def get_input_sample(self, cut_range):
         # 1.) Cut Ephys / fancy indexing for memmap is planned, if fixed use: cut_data = self.wavelets[cut_range, self.fourier_frequencies, self.channels]
         cut_data = self.wavelets[cut_range, :, :]
-
         # 2.) Normalize input
         cut_data = (cut_data - self.est_mean) / self.est_std
-
-        # 3.) Reshape for model input
-        #cut_data = np.reshape(cut_data, (self.batch_size, self.model_timesteps, cut_data.shape[1], cut_data.shape[2]))
-
-        # 4.) Take care of optional settings
+        # 3.) Take care of optional settings
         cut_data = np.transpose(cut_data, axes=(2, 0, 1))
         cut_data = cut_data[..., np.newaxis]
-
         return cut_data
 
     def get_output_sample(self, cut_range):
@@ -252,10 +215,8 @@ class WaveletDatasetFrey(Dataset):
         out_sample = []
         for out in self.outputs:
             cut_data = out[cut_range, ...]
-
             # 3.) Divide evenly and make sure last output is being decoded
             if self.average_output:
                 cut_data = cut_data[np.arange(0, cut_data.shape[0] + 1, self.average_output)[1::] - 1]
             out_sample.append(cut_data)
-
         return out_sample

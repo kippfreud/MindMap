@@ -1,21 +1,20 @@
 """
-
-Contains decoder architectures
-
+Contains neural decoder network objects
 """
 
 # --------------------------------------------------------------
 
 import torch
 import torch.backends.cudnn
-import numpy as np
 from torch import nn
-from torch.nn import functional as F
-import pickle
 
 # --------------------------------------------------------------
 
 class Standard_Decoder(nn.Module):
+    """
+    Standard Neural decoder architecture - takes wavelet image sets, returns outputs
+    as defined in tg options dict
+    """
     def __init__(self, tg, show_summary=True):
         super(Standard_Decoder, self).__init__()
         self.input_shape = tg.input_shape
@@ -140,6 +139,7 @@ class Standard_Decoder(nn.Module):
             nn.init.zeros_(layer.bias)
         if hasattr(layer, "weight"):
             nn.init.kaiming_normal_(layer.weight)
+
 # ---------------------------------------------------------------------
 
 class GaussianNoise(nn.Module):
@@ -155,8 +155,6 @@ class GaussianNoise(nn.Module):
             computing the scale of the noise. If `False` then the scale of the noise
             won't be seen as a constant but something to optimize: this will bias the
             network to generate vectors with smaller values.
-
-    ..todo:: device is None by default, which will cause an error. Fix to do something more sensible.
     """
 
     def __init__(self, sigma=0.1, is_relative_detach=True):
@@ -172,9 +170,11 @@ class GaussianNoise(nn.Module):
             x = x + sampled_noise
         return x
 
+# ---------------------------------------------------------------------
+
 class TimeDistributed(nn.Module):
     """
-    Mimics Keras Timedistributed module. Applies same convulutions across 1st dim.
+    Mimics Keras Timedistributed module. Applies same convolutions across 1st dim.
     """
     def __init__(self, module, batch_first=False):
         super(TimeDistributed, self).__init__()
@@ -185,26 +185,37 @@ class TimeDistributed(nn.Module):
         if len(x.size()) <= 2:
             return self.module(x)
         # Squash samples and timesteps into a single axis
-
         #x_reshape = x.contiguous().view(-1, x.size(-1))  # (samples * timesteps, input_size)
         x_reshape = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3],x.shape[4]))
 
         y = self.module(x_reshape)
-        # We have to reshape Y
+        # reshape Y
         y = torch.reshape(y, (x.shape[0],x.shape[1],y.shape[1], y.shape[2], y.shape[3]))
 
         return y
 
+# ---------------------------------------------------------------------
+
 class Lambda(nn.Module):
+    """
+    Mimics Keras lambda module. Applies a function lambd to each layer.
+    """
     def __init__(self, lambd):
         super(Lambda, self).__init__()
         self.lambd = lambd
+
     def forward(self, x):
         return self.lambd(x)
 
+# ---------------------------------------------------------------------
+
 class TimeDistributedFlatten(nn.Module):
+    """
+    Flattens input's 1st-3rd dimension.
+    """
     def __init__(self):
         super(TimeDistributedFlatten, self).__init__()
+
     def forward(self, x):
         x_reshape = torch.reshape(x, (x.shape[0]*x.shape[1],x.shape[2],x.shape[3],x.shape[4]))
         y = torch.flatten(x_reshape, start_dim=1, end_dim=3)
