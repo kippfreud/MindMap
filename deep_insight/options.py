@@ -4,6 +4,10 @@ Defines options dict for training.
 
 """
 
+RAT_NAME = "Elliott"
+MODEL_PATH = f"models/{RAT_NAME}.pt"
+H5_PATH = f"data/{RAT_NAME}.h5"
+
 def get_opts(fp_hdf_out, train_test_times):
     """
     Returns the options dictionary which contains all parameters needed to train the model

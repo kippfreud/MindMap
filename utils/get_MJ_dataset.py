@@ -5,7 +5,7 @@ Runs training for deepInsight
 """
 # -----------------------------------------------------------------------
 
-from deep_insight.options import get_opts
+from deep_insight.options import get_opts, H5_PATH
 from deep_insight.wavelet_dataset import create_train_and_test_datasets, WaveletDataset
 from deep_insight.trainer import Trainer
 import deep_insight.loss
@@ -28,7 +28,7 @@ else:
 
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
+PREPROCESSED_HDF5_PATH = H5_PATH
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',

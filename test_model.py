@@ -29,8 +29,8 @@ else:
 takeout = False
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
-MODEL_PATH = 'models/trained_grid_world_500.pt'
+PREPROCESSED_HDF5_PATH = 'data/Gerrit.h5'
+MODEL_PATH = 'models/Gerrit.pt'
 
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
@@ -62,7 +62,7 @@ for arr in cv_splits[0:-1]:
     training_indices += list(arr)
 training_indices = np.array(training_indices)
 
-test_indeces = np.array(cv_splits[-1])
+test_indeces = np.array(cv_splits[1])
 # opts -> generators -> model
 # reset options for this cross validation set
 training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(training_indices, test_indeces))
@@ -126,7 +126,7 @@ ALL_SP = []
 ALL_THE = []
 ALL_SPE = []
 
-with imageio.get_writer('test.gif', mode='I') as writer:
+with imageio.get_writer('testt.gif', mode='I') as writer:
     for batch, labels in test_loader:
         logits = model(batch)
 

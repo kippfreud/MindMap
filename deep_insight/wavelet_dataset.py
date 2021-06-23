@@ -54,6 +54,7 @@ class WaveletDataset(Dataset):
         return len(self.cv_indices)
 
     def __getitem__(self, idx):
+        og_ix = idx
         # 1.) Define start and end index
         if self.shuffle:
             idx = np.random.choice(self.cv_indices)
@@ -74,8 +75,11 @@ class WaveletDataset(Dataset):
         output_sample = self.get_output_sample(cut_range, past_cut_range)
 
         self.prev_ind = idx
-        #print(idx)
 
+        # if output_sample[0][0] > 400:
+        #     return self.__getitem__(og_ix)
+        #
+        # output_sample[0] = np.array([-1,-1])
         return (input_sample, output_sample)
 
     # -------------------------------------------------------------------------

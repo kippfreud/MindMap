@@ -16,6 +16,7 @@ import h5py
 import numpy as np
 import torch
 import wandb
+import time
 
 # -----------------------------------------------------------------------
 
@@ -26,11 +27,11 @@ else:
 USE_WANDB = True
 
 if __name__ == '__main__':
-
-    if USE_WANDB: wandb.init(project="my-project")
-
+    rat_name = "Elliott"
+    start_time = time.time()
+    if USE_WANDB: wandb.init(project=rat_name)
     #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-    PREPROCESSED_HDF5_PATH = 'data/grid_world.h5'
+    PREPROCESSED_HDF5_PATH = f'data/{rat_name}.h5'
     hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
     wavelets = np.array(hdf5_file['inputs/wavelets'])
     frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
@@ -74,14 +75,14 @@ if __name__ == '__main__':
             train_dataset,
             batch_size=training_options['batch_size'],
             shuffle=False,
-            num_workers=8,
+            num_workers=1,
             pin_memory=True)
 
         test_loader = torch.utils.data.DataLoader(
             test_dataset,
             batch_size=training_options['batch_size'],
             shuffle=False,
-            num_workers=8,
+            num_workers=1,
             pin_memory=True)
 
         model_function = getattr(deep_insight.networks, train_dataset.model_function)
@@ -103,6 +104,8 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/trained_grid_world.pt")
+        #torch.save(model.state_dict(), f"models/{rat_name}.pt")
+
         print("Done!")
-        exit(0)
+        print("TIME:")
+        print(time.time() - start_time)
