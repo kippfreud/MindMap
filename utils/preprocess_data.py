@@ -5,12 +5,10 @@ This should perform necessary preprocessing of Matt Jones' data.
 #------------------------------------------------------------------------
 
 from deep_insight.options import get_opts
-import pynwb
 import scipy.io
 import h5py
 from datetime import datetime
 from dateutil.tz import tzlocal
-from pynwb import NWBFile
 import numpy as np
 import torch
 import wandb
@@ -167,9 +165,9 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                 this_index_end = wavelet_index_end - index_gap
                 hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[0: -index_gap, :, :]
                 hdf5_file["outputs/position"][this_index_start:this_index_end,:] = output_chunk["position"][0:-index_gap,:]
-                hdf5_file["outputs/head_direction"][this_index_start:this_index_end,:] = output_chunk["head_direction"][0:-index_gap,:]
-                hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][0:-index_gap, :]
-                hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][0:-index_gap, :]
+                #hdf5_file["outputs/head_direction"][this_index_start:this_index_end,:] = output_chunk["head_direction"][0:-index_gap,:]
+                #hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][0:-index_gap, :]
+                #hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][0:-index_gap, :]
                 hdf5_file["outputs/speed"][this_index_start:this_index_end,:] = output_chunk["speed"][0:-index_gap,:]
             elif c == num_chunks - 1:  # Make sure the last one fits fully
                 this_index_start = wavelet_index_start + index_gap
@@ -394,14 +392,14 @@ if __name__ == '__main__':
 
     if USE_WANDB: wandb.init(project="my-project")
 
-    HDF5_PATH = 'data/data.mat'
+    HDF5_PATH = 'data/Nongrid/Elliott-2.mat'
     hdf5_file = h5py.File(HDF5_PATH, mode='r')
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
     training_options = get_opts(HDF5_PATH, train_test_times=(np.array([]), np.array([])))
 
     # wavelets = np.array(hdf5_file['inputs/wavelets'])
     # frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
-    preprocess_input("data/grid_world.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
+    preprocess_input("data/Elliott-NG.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
                      average_window=250,
                      channels=list(range(training_options['channels'])))
 
