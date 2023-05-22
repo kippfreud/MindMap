@@ -52,7 +52,7 @@ class Trainer(object):
                 if epoch_steps > 0 and epoch_steps % self.train_loader.dataset.steps_per_epoch==0:
                     break
                 epoch_steps += 1
-                print(f"Beginning Step {self.step}")
+                #print(f"Beginning Step {self.step}")
                 batch = batch.to(self.device)
                 for i in range(len(labels)):
                     labels[i] = labels[i].to(self.device)
@@ -80,7 +80,7 @@ class Trainer(object):
                         l
                     ))
                 loss = torch.sum(losses)
-                print(f"Loss = {loss}")
+                #print(f"Loss = {loss}")
                 if self.use_wandb:
                     wandb.log({'epoch': epoch, 'Training_Loss_Total': loss})
                     wandb.log({'step': self.step, 'Training_Loss_Total': loss})

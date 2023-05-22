@@ -20,25 +20,30 @@ import time
 
 # -----------------------------------------------------------------------
 
+DATA_DIR = "/home/Tharg/Projects/DeepInsight/data/"
+DATA_ID = "E-2009-06-24"
+USE_WANDB = False
+
+# -----------------------------------------------------------------------
+
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
 else:
     DEVICE = torch.device("cpu")
-USE_WANDB = True
 
 if __name__ == '__main__':
     rat_name = "Elliott"
     start_time = time.time()
     if USE_WANDB: wandb.init(project=rat_name)
     #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-    PREPROCESSED_HDF5_PATH = f'data/{rat_name}.h5'
+    PREPROCESSED_HDF5_PATH = f'{DATA_DIR}{DATA_ID}.h5'
     hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
     wavelets = np.array(hdf5_file['inputs/wavelets'])
     frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
 
     loss_functions = {'position': 'euclidean_loss',
                       'head_direction': 'cyclical_mae_rad',
-                      'direction': 'cyclical_mae_rad',
+                      #'direction': 'cyclical_mae_rad',
                       #'direction_delta': 'cyclical_mae_rad',
                       'speed': 'mae'}
     # Get loss functions for each output

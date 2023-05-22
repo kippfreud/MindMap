@@ -94,7 +94,6 @@ class Standard_Decoder(nn.Module):
         self.fc_orders = []
         for key, output in zip(tg.loss_functions.keys(), tg.outputs):
             fc_order = []
-            print(H)
             initial_in_channels = 256 * H #..todo: should not be hardcoded!
             for d in range(0, tg.num_dense):
                 setattr(self,
