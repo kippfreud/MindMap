@@ -19,8 +19,8 @@ def get_opts(fp_hdf_out, train_test_times):
     # -------- DATA ------------------------
     opts['fp_hdf_out'] = fp_hdf_out  # Filepath for hdf5 file storing wavelets and outputs
     opts['sampling_rate'] = 512*4 # Sampling rate of the wavelets
-    opts['training_indices'] = train_test_times[0].tolist()  # Indices into wavelets used for training the model, adjusted during CV
-    opts['testing_indices'] = train_test_times[1].tolist()  # Indices into wavelets used for testing the model, adjusted during CV
+    opts['training_indices'] = train_test_times[0]  # Indices into wavelets used for training the model, adjusted during CV
+    opts['testing_indices'] = train_test_times[1]  # Indices into wavelets used for testing the model, adjusted during CV
     opts['channels'] = 16
 
     # -------- MODEL PARAMETERS --------------
@@ -39,7 +39,7 @@ def get_opts(fp_hdf_out, train_test_times):
     # -------- TRAINING----------------------
     opts['batch_size'] = 8  # Batch size used for training the model
     opts['steps_per_epoch'] = 250  # Number of steps per training epoch
-    opts['validation_steps'] = 15  # Number of steps per validation epoch #..todo: fix validation
+    opts['validation_steps'] = 1  # Number of steps per validation epoch #..todo: fix validation
     opts['epochs'] = 1000  # Number of epochs
     opts['shuffle'] = False  # If input should be shuffled
     opts['random_batches'] = True  # If random batches in time are used

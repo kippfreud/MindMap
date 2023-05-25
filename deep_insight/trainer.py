@@ -65,8 +65,8 @@ class Trainer(object):
                     loss_func = list(self.criterion[0].values())[ind]
                     loss_weight= list(self.criterion[1].values())[ind]
                     loss_key = list(self.criterion[0].keys())[ind]
-                    if logit.shape[1] == 1:
-                        labels[ind] = torch.unsqueeze(labels[ind], 1)
+                    # if logit.shape[1] == 1:
+                    #     labels[ind] = torch.unsqueeze(labels[ind], 1)
                         #logit = torch.squeeze(logit)
                     l = torch.multiply(
                             loss_func(logit, labels[ind]) ,
@@ -93,8 +93,9 @@ class Trainer(object):
 
                 self.step += 1
 
-            if ((self.epoch + 1) % self.train_loader.dataset.validation_steps) == 0:
-                self.validate()
+            self.validate()
+            # if ((self.epoch + 1) % self.train_loader.dataset.validation_steps) == 0:
+            #     self.validate()
             # self.validate() will put the model in validation mode,
             # so we have to switch back to train mode afterwards
             self.model.train()
@@ -117,8 +118,8 @@ class Trainer(object):
                     loss_func = list(self.criterion[0].values())[ind]
                     loss_weight = list(self.criterion[1].values())[ind]
                     loss_key = list(self.criterion[0].keys())[ind]
-                    if logit.shape[1] == 1:
-                        labels[ind] = torch.unsqueeze(labels[ind], 1)
+                    # if logit.shape[1] == 1:
+                    #     labels[ind] = torch.unsqueeze(labels[ind], 1)
                     l = torch.multiply(
                             loss_func(logit, labels[ind]),
                             loss_weight

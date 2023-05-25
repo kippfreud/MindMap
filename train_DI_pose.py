@@ -17,12 +17,14 @@ import numpy as np
 import torch
 import wandb
 import time
+import glob
 
 # -----------------------------------------------------------------------
 
 DATA_DIR = "/home/Tharg/Projects/DeepInsight/data/"
-DATA_ID = "E-2009-06-24"
-USE_WANDB = False
+RAT = "E"
+DATA_FILES = [f for f in glob.glob(f"{DATA_DIR}{RAT}*train.h5") if "PC" not in f and "PFC" not in f]
+USE_WANDB = True
 
 # -----------------------------------------------------------------------
 
@@ -34,47 +36,57 @@ else:
 if __name__ == '__main__':
     rat_name = "Elliott"
     start_time = time.time()
-    if USE_WANDB: wandb.init(project=rat_name)
+    if USE_WANDB: wandb.init(project=rat_name,
+                             entity="wolgast1")
     #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-    PREPROCESSED_HDF5_PATH = f'{DATA_DIR}{DATA_ID}.h5'
-    hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
-    wavelets = np.array(hdf5_file['inputs/wavelets'])
-    frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
+    hdf5_files = [h5py.File(f, mode='r') for f in DATA_FILES]
+    wavelets = [np.array(hdf5_file['inputs/wavelets']) for hdf5_file in hdf5_files]
+    frequencies = [np.array(hdf5_file['inputs/fourier_frequencies']) for hdf5_file in hdf5_files]
 
     loss_functions = {'position': 'euclidean_loss',
-                      'head_direction': 'cyclical_mae_rad',
+                      #'head_direction': 'cyclical_mae_rad',
                       #'direction': 'cyclical_mae_rad',
                       #'direction_delta': 'cyclical_mae_rad',
-                      'speed': 'mae'}
+                      #'speed': 'mae'}
+                      }
     # Get loss functions for each output
     for key, item in loss_functions.items():
         function_handle = getattr(deep_insight.loss, item)
         loss_functions[key] = function_handle
 
     loss_weights = {'position': 1,
-                    'head_direction': 200,  #was 10, tweaked for MJ
-                    'direction': 200,  # was 10, tweaked for MJ
+                    #'head_direction': 200,  #was 10, tweaked for MJ
+                    #'direction': 200,  # was 10, tweaked for MJ
                     #'direction_delta': 10,  # was 10, tweaked for MJ
-                    'speed': 50} #was 2 but tweaked for MJ dataset
+                    #'speed': 5} #was 2 but tweaked for MJ dataset
+                    }
 
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
-    training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(np.array([]), np.array([])))
+    training_options = get_opts(hdf5_files, train_test_times=(np.array([]), np.array([])))
 
-    exp_indices = np.arange(0, wavelets.shape[0] - training_options['model_timesteps'])
-    cv_splits = np.array_split(exp_indices, training_options['num_cvs'])
+    exp_indices = []
+    cv_splits = []
+    for w in wavelets:
+        w_inds = np.arange(0, w.shape[0] - training_options['model_timesteps'])
+        exp_indices.append( w_inds )
+        cv_splits.append(np.array_split(w_inds, training_options['num_cvs']))
 
-    for cv_run, cvs in enumerate(cv_splits):
+    for cv_run in range(training_options['num_cvs']):
         # For cv
-        training_indices = np.setdiff1d(exp_indices, cvs)  # All except the test indices
-        testing_indices = cvs
+        training_indices = []
+        testing_indices = []
+        for i in range(len(wavelets)):
+            training_indices.append( np.setdiff1d(exp_indices[i], cv_splits[i][cv_run]) ) # All except the test indices
+            testing_indices.append( cv_splits[i][cv_run] )
         # opts -> generators -> model
         # reset options for this cross validation set
-        training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(training_indices, testing_indices))
+        training_options = get_opts(hdf5_files, train_test_times=(training_indices, testing_indices))
         training_options['loss_functions'] = loss_functions.copy()
         training_options['loss_weights'] = loss_weights
         training_options['loss_names'] = list(loss_functions.keys())
 
-        train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_file)
+        del wavelets
+        train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_files)
 
         train_loader = torch.utils.data.DataLoader(
             train_dataset,

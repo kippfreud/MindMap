@@ -92,7 +92,7 @@ class Standard_Decoder(nn.Module):
         # Flatten and fc
         self.flatten = TimeDistributedFlatten()
         self.fc_orders = []
-        for key, output in zip(tg.loss_functions.keys(), tg.outputs):
+        for key, output in zip(tg.loss_functions.keys(), tg.outputs[0]):
             fc_order = []
             initial_in_channels = 256 * H #..todo: should not be hardcoded!
             for d in range(0, tg.num_dense):
