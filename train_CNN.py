@@ -20,8 +20,8 @@ import glob
 # -----------------------------------------------------------------------
 
 DATA_DIR = "./data/"
-RAT = "E"
-RAT_NAME = "Elliott"
+RAT = "F"
+RAT_NAME = "Felix"
 DATA_FILES = [f for f in glob.glob(f"{DATA_DIR}{RAT}*train.h5") if "PC" not in f and "PFC" not in f]
 USE_WANDB = True
 

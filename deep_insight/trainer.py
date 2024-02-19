@@ -48,12 +48,13 @@ class Trainer(object):
             if self.use_wandb: wandb.log({'step': self.step, 'epoch': epoch})
             epoch_steps = 0
             self.model.train()
-            data_load_start_time = time.time()
+            epoch_training_loss = {
+                k: [] for k in self.target_names
+            }
             for batch, labels in self.train_loader:
                 if epoch_steps > 0 and epoch_steps % self.train_loader.dataset.steps_per_epoch==0:
                     break
                 epoch_steps += 1
-                #print(f"Beginning Step {self.step}")
                 batch = batch.to(self.device)
                 for i in range(len(labels)):
                     labels[i] = labels[i].to(self.device)
@@ -74,13 +75,16 @@ class Trainer(object):
                             loss_weight
                         )
                     if self.use_wandb:
-                        wandb.log({'epoch': epoch, f'Training_Loss_{loss_key}': torch.sum(l)})
-                        wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.sum(l)})
+                        wandb.log({'epoch': epoch, f'Training_Loss_{loss_key}': torch.mean(l)})
+                        wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.mean(l)})
+                    epoch_training_loss[loss_key] = {
+                        k: [] for k in self.target_names
+                    }
                     losses = torch.cat((
                         losses,
                         l
                     ))
-                loss = torch.sum(losses)
+                loss = torch.mean(losses)
                 #print(f"Loss = {loss}")
                 if self.use_wandb:
                     wandb.log({'epoch': epoch, 'Training_Loss_Total': loss})
