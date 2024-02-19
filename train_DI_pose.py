@@ -1,17 +1,15 @@
 """
 
-Runs training for deepInsight
+Runs training for decoding CNN
 
 """
 # -----------------------------------------------------------------------
 
 from deep_insight.options import get_opts
-from deep_insight.wavelet_dataset import create_train_and_test_datasets, WaveletDataset
+from deep_insight.wavelet_dataset import create_train_and_test_datasets
 from deep_insight.trainer import Trainer
 import deep_insight.loss
 import deep_insight.networks
-import os
-import matplotlib.pyplot as plt
 import h5py
 import numpy as np
 import torch
@@ -21,8 +19,9 @@ import glob
 
 # -----------------------------------------------------------------------
 
-DATA_DIR = "/home/Tharg/Projects/DeepInsight/data/"
+DATA_DIR = "./data/"
 RAT = "E"
+RAT_NAME = "Elliott"
 DATA_FILES = [f for f in glob.glob(f"{DATA_DIR}{RAT}*train.h5") if "PC" not in f and "PFC" not in f]
 USE_WANDB = True
 
@@ -34,9 +33,8 @@ else:
     DEVICE = torch.device("cpu")
 
 if __name__ == '__main__':
-    rat_name = "Elliott"
     start_time = time.time()
-    if USE_WANDB: wandb.init(project=rat_name,
+    if USE_WANDB: wandb.init(project=RAT_NAME,
                              entity="wolgast1")
     #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
     hdf5_files = [h5py.File(f, mode='r') for f in DATA_FILES]

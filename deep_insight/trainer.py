@@ -30,6 +30,7 @@ class Trainer(object):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.criterion = (criterion[0], {key: torch.tensor(value).to(self.device) for (key,value) in criterion[1].items()})
+        self.target_names = list(criterion[0].keys())
         self.optimizer = optimizer
         self.step = 0
         self.epoch = 0
@@ -101,48 +102,34 @@ class Trainer(object):
             self.model.train()
 
     def validate(self):
-        total_loss = 0
-        total_loss_key = {}
         self.model.eval()
         print("Validating")
-        # No need to track gradients for validation as we're not optimizing.
+        validation_loss = {
+            k: [] for k in self.target_names
+        }
         with torch.no_grad():
             for batch, labels in self.val_loader:
                 batch = batch.to(self.device)
                 for i in range(len(labels)):
                     labels[i] = labels[i].to(self.device)
                 logits = self.model(batch)
-                losses = torch.tensor([]).to(self.device)
                 for ind, logit in enumerate(logits):
                     logit.to(self.device)
                     loss_func = list(self.criterion[0].values())[ind]
                     loss_weight = list(self.criterion[1].values())[ind]
                     loss_key = list(self.criterion[0].keys())[ind]
-                    # if logit.shape[1] == 1:
-                    #     labels[ind] = torch.unsqueeze(labels[ind], 1)
                     l = torch.multiply(
                             loss_func(logit, labels[ind]),
                             loss_weight
                         )
-                    if loss_key in total_loss_key:
-                        total_loss_key[loss_key] += torch.sum(l)
-                    else:
-                        total_loss_key[loss_key] = torch.sum(l)
-                    if self.use_wandb:
-                        wandb.log({'step': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
-                        wandb.log({'epoch': self.step, f'Validation_Loss_{loss_key}': torch.sum(l)})
-                    losses = torch.cat((
-                        losses,
-                        l
-                    ))
-                loss = torch.sum(losses)
-                total_loss += loss.item()
-
-        if self.use_wandb: wandb.log({'step': self.step, 'Validation_Loss_Total': total_loss})
-        print(f"Total Loss: {total_loss}")
-        for k in total_loss_key.keys():
-            print(f"Total Loss {k}: {total_loss_key[k]}")
-
+                    validation_loss[loss_key].append(l)
+        if self.use_wandb:
+            total_loss = 0
+            for k in self.target_names:
+                L = torch.mean(torch.concat(validation_loss[k]))
+                wandb.log({'step': self.step, f'Validation_Loss_{k}': L})
+                total_loss += L
+            wandb.log({'step': self.step, f'Validation_Loss_Sum': total_loss})
 
     @staticmethod
     def __combine_file_results(results):
