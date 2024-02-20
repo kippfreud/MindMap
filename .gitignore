@@ -3,8 +3,6 @@ __pycache__/
 **/__pycache__/
 wandb/**
 wandb/
-data/matt_jones/
-data/traces_M1336.mat
-data/data.mat
-models/old/
+data/**.h5
+models/**.pt
 deepinsight/
