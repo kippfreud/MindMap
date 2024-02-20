@@ -5,21 +5,12 @@ This should perform necessary preprocessing of Matt Jones' data.
 #------------------------------------------------------------------------
 
 from deep_insight.options import get_opts
-import scipy.io
-import h5py
-from datetime import datetime
-from dateutil.tz import tzlocal
-import numpy as np
 import torch
 import wandb
-import deep_insight.loss
-from deep_insight.wavelet_dataset import create_train_and_test_datasets, WaveletDataset
 from wavelets import WaveletAnalysis
-import time
 from joblib import Parallel, delayed
 import numpy as np
 import h5py
-import tensorflow as tf  # Progress bar only
 
 #------------------------------------------------------------------------
 
