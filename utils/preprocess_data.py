@@ -393,50 +393,8 @@ if __name__ == '__main__':
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
     training_options = get_opts(HDF5_PATH, train_test_times=(np.array([]), np.array([])))
 
-    # wavelets = np.array(hdf5_file['inputs/wavelets'])
-    # frequencies = np.array(hdf5_file['inputs/fourier_frequencies'])
     preprocess_input("data/Elliott-NG.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
                      average_window=250,
                      channels=list(range(training_options['channels'])))
-
-    # Prepare outputs
-    # preprocess_output("data/preprocessed_MJ4.h5",
-    #                   hdf5_file
-    #                   average_window=250,
-    #                   sampling_rate=training_options['sampling_rate'])
-
-
-    # HDF5_PATH = "data/preprocessed_final.h5"
-    # hdf5_file = h5py.File(HDF5_PATH, mode='r')
-    # # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
-    # training_options = get_opts(HDF5_PATH, train_test_times=(np.array([]), np.array([])))
-    #
-    # loss_functions = {'position': 'euclidean_loss',
-    #                   'head_direction': 'cyclical_mae_rad',
-    #                   'speed': 'mae'}
-    # # Get loss functions for each output
-    # for key, item in loss_functions.items():
-    #     function_handle = getattr(deep_insight.loss, item)
-    #     loss_functions[key] = function_handle
-    #
-    # loss_weights = {'position': 1,
-    #                 'head_direction': 25,
-    #                 'speed': 2}
-    #
-    # exp_indices = np.arange(0, wavelets.shape[0] - training_options['model_timesteps'])
-    # cv_splits = np.array_split(exp_indices, training_options['num_cvs'])
-    #
-    # for cv_run, cvs in enumerate(cv_splits):
-    #     # For cv
-    #     training_indices = np.setdiff1d(exp_indices, cvs)  # All except the test indices
-    #     testing_indices = cvs
-    #     # opts -> generators -> model
-    #     # reset options for this cross validation set
-    #     training_options = get_opts(HDF5_PATH, train_test_times=(training_indices, testing_indices))
-    #     training_options['loss_functions'] = loss_functions.copy()
-    #     training_options['loss_weights'] = loss_weights
-    #     training_options['loss_names'] = list(loss_functions.keys())
-    #
-    #     train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_file)
 
 print("0")
