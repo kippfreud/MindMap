@@ -20,10 +20,8 @@ import glob
 # -----------------------------------------------------------------------
 
 DATA_DIR = "./data/"
-#RAT = "F"
 RAT_NAME = "Elliott"
-#DATA_FILES = [f for f in glob.glob(f"{DATA_DIR}{RAT}*train.h5") if "PC" not in f and "PFC" not in f]
-DATA_FILES = [f"{DATA_DIR}{RAT_NAME}_train.h5"]
+DATA_FILES = [f"{DATA_DIR}{RAT_NAME}.h5"]
 USE_WANDB = True
 
 # -----------------------------------------------------------------------
@@ -88,14 +86,14 @@ if __name__ == '__main__':
             train_dataset,
             batch_size=training_options['batch_size'],
             shuffle=False,
-            num_workers=1,
+            num_workers=0,
             pin_memory=True)
 
         test_loader = torch.utils.data.DataLoader(
             test_dataset,
             batch_size=training_options['batch_size'],
             shuffle=False,
-            num_workers=1,
+            num_workers=0,
             pin_memory=True)
 
         model_function = getattr(deep_insight.networks, train_dataset.model_function)

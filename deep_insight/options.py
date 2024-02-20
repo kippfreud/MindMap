@@ -6,9 +6,7 @@ Defines options dict for training, network params, etc.
 
 RAT_NAME = "Elliott"
 MODEL_PATH = f"models/{RAT_NAME}_0.pt"
-H5_PATH = f"data/{RAT_NAME}_train.h5"
-# MODEL_PATH = f"models/{RAT_NAME}_0.pt"
-# H5_PATH = f"data/{RAT_NAME[0]}_train.h5"
+H5_PATH = f"data/{RAT_NAME}.h5"
 
 # ---------------------------------------------------------------------
 
@@ -42,7 +40,7 @@ def get_opts(fp_hdf_out, train_test_times):
     opts['batch_size'] = 32  # Batch size used for training the model
     opts['steps_per_epoch'] = 250  # Number of steps per training epoch
     opts['validation_steps'] = 250  # Number of steps per validation epoch #..todo: fix validation
-    opts['epochs'] = 100  # Number of epochs
+    opts['epochs'] = 50  # Number of epochs
     opts['shuffle'] = False  # If input should be shuffled
     opts['random_batches'] = True  # If random batches in time are used
     opts['num_cvs'] = 5 # the number of cross validation splits

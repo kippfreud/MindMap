@@ -10,3 +10,4 @@ pandas
 wandb
 h5py
 pynwb
+requirements

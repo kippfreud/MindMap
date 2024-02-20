@@ -39,7 +39,6 @@ class Odometry(object):
         :return: inferred translation and rotation
         """
         translation, r = self._get_odometry(input)
-
         if self.old_rotation is None or absolute_rot is True:
             rotation = r
         else:

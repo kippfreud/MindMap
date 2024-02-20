@@ -10,6 +10,7 @@ import imageio
 from ratSLAM.ratSLAM import RatSLAM
 from ratSLAM.utilities import showTiming
 from utils.get_MJ_dataset import get_mj_dataset
+from ratSLAM.data_simulation import generate_dummy_dataset
 from utils.logger import root_logger
 
 #------------------------------------------------------------------------
@@ -35,7 +36,9 @@ if __name__ == "__main__":
     y = []
     with imageio.get_writer('NeuroSLAM-Full.gif', mode='I') as writer:
         for i, d in enumerate(data):
-            if i > 1000:
+            if i < 1:
+                continue
+            if i > 1100:
                 break
             slam.step(d)
             if i%1 == 0 and i>0:

@@ -105,7 +105,6 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
     # Start parallel wavelet transformation
     print('Starting wavelet transformation (n={}, chunks={}, frequencies={})'.format(
         num_points, num_chunks, num_fourier_frequencies))
-    progress_bar = tf.keras.utils.Progbar(num_chunks, width=30, verbose=1, interval=0.05, unit_name='chunk')
     for c in range(0, num_chunks):
         if full_transform:
             raw_chunk = raw_data[:, c] - mean_signal
@@ -188,10 +187,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                 hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][index_gap:-index_gap, :]
                 hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][index_gap:-index_gap, :]
                 hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = output_chunk["speed"][index_gap:-index_gap, :]
-
         hdf5_file.flush()
-        progress_bar.add(1)
-
     # 7.) Put frequencies in and close file
     if full_transform:
         wavelet_power = np.transpose(hdf5_file["inputs/tmp_wavelets"], axes=(1, 2, 0))

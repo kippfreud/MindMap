@@ -192,7 +192,8 @@ class ExperienceMap(object):
         self.prev_visited = []
 
         # Plotting
-        self.fig = plt.figure(figsize=(10., 4.))
+        self.fig = plt.figure(figsize=(15., 6.))
+        self.fig.suptitle("Experience Map Generation")
         self.position_ax = self.fig.add_subplot(121, facecolor='#E6E6E6')
         self.position_ax.set_xlim([0, 750])
         self.position_ax.set_ylim([0, 600])
@@ -222,8 +223,8 @@ class ExperienceMap(object):
 
         self.position_ax.clear()
         self.compass_ax.clear()
-        self.position_ax.set_xlim([-300, 600])
-        self.position_ax.set_ylim([-600, 600])
+        self.position_ax.set_xlim([-900, 200])
+        self.position_ax.set_ylim([-900, 200])
         self.compass_ax.set_ylim(0, 0.02)
         self.compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
 
@@ -231,13 +232,17 @@ class ExperienceMap(object):
         true_p_adj = rotate(self.true_pose[0]-self.initial_pose[0],
                             degrees=self.initial_pose[1])
         self.prev_visited.append((true_p_adj[0], true_p_adj[1]))
-        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green")
-        self.position_ax.scatter([t[0] for t in self.prev_visited], [t[1] for t in self.prev_visited], c="pink")
+        self.position_ax.scatter([t[0] for t in self.prev_visited], [t[1] for t in self.prev_visited], c="pink", label="Visited Locations")
+        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="lightgreen", s=60, label="Current Location")
+        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green", label="Estimated Current Location")
         pos = {e: (e.x_em, e.y_em) for e in self.G.nodes}
         cols = ["#004650" if e==self.current_exp else "#933A16" for e in self.G.nodes]
-        nx.draw(self.G, pos=pos, node_color=cols, node_size=50, ax=self.position_ax)
-
+        nx.draw(self.G, pos=pos, node_color=cols, node_size=50, ax=self.position_ax, label="Experience Map")
+        self.position_ax.legend()
         # COMPASS AXIS
+
+        print(f"True th = {self.true_pose[1][0]*np.pi/180}")
+        print(f"{self.true_pose[1][0]*np.pi/180 - self.accum_th}")
         self.compass_ax.arrow(0, 0,
                              # -5.,5.,
                              self.true_pose[1][0]*np.pi/180, self.true_speed/2,
@@ -252,7 +257,8 @@ class ExperienceMap(object):
         plt.pause(0.005)
 
         image = np.frombuffer(plt.gcf().canvas.tostring_rgb(), dtype='uint8')
-        image = image.reshape(plt.gcf().canvas.get_width_height()[::-1] + (3,))
+        # image = image.reshape(plt.gcf().canvas.get_width_height()[::-1] + (3,))
+        image = image.reshape((int(6075000/(1500*3)), 1500, 3)) #Windows quick fix ..todo: fix for windows
         writer.append_data(image)
 
     @timethis
@@ -274,11 +280,10 @@ class ExperienceMap(object):
         else:
             self.true_speed = ((self.true_pose[0][0] - true_pose[0][0])**2 + (self.true_pose[0][1] - true_pose[0][1])**2)**0.5
         self.true_pose = true_pose
-        # print(f"Rotation is {rotation}")
-        # print(f"Translation is {translation}")
         # Use translation and rotation to update current position estimates of agent.
         #self.accum_th = self._clip_angle_pi(self.accum_th - rotation)
         self.accum_th = self._clip_angle_pi(rotation)
+
         self.accum_diff_x += translation * np.cos(self.accum_th)
         self.accum_diff_y += translation * np.sin(self.accum_th)
         # Get distance between last experience and new location
@@ -303,8 +308,6 @@ class ExperienceMap(object):
             # Set accum_difference x and y variables to 0
             self.accum_diff_x = 0
             self.accum_diff_y = 0
-            # Set accum_th variable to true experience th value.
-            self.accum_th = self.current_exp.th_em
         # If the view cell has changed, but is not new, we search for the given view cells
         # matching experience.
         elif view_cell != self.current_exp.view_cell:
@@ -354,6 +357,7 @@ class ExperienceMap(object):
         self.history.append(self.current_exp)
         # If we do not need to adjust the map, return.
         if not adjust_map:
+            print(f"At end of step AccumTh = {self.accum_th}")
             return
         # if we do need to adjust the map, do it now.
         #..todo: reimplement map adjustment

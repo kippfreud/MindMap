@@ -6,17 +6,12 @@ Runs training for deepInsight
 # -----------------------------------------------------------------------
 
 from deep_insight.options import get_opts, MODEL_PATH, H5_PATH
-from deep_insight.wavelet_dataset import create_train_and_test_datasets, WaveletDataset
-from deep_insight.trainer import Trainer
+from deep_insight.wavelet_dataset import create_train_and_test_datasets
 import deep_insight.loss
 import deep_insight.networks
-import os
-import matplotlib.pyplot as plt
 import h5py
 import numpy as np
 import torch
-import wandb
-import matplotlib.pyplot as plt
 
 # -----------------------------------------------------------------------
 
@@ -45,7 +40,6 @@ loss_weights = {'position': 1,
                 'direction': 25,
                 #'direction_delta': 25,
                 'speed': 2}
-# ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
 training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(np.array([]), np.array([])))
 training_options['loss_functions'] = loss_functions.copy()
 training_options['loss_weights'] = loss_weights
@@ -77,12 +71,16 @@ MODEL.load_state_dict(torch.load(MODEL_PATH))
 MODEL.eval()
 
 def get_odometry(data, ret_loc=False):
-    tansor = torch.from_numpy(data).unsqueeze(0)
+    if not torch.is_tensor(data):
+        data = torch.from_numpy(data)
+    tansor = data.unsqueeze(0)
     logits = MODEL(tansor)
     position_ests = list(logits[0])[0]
     angle_ests = list(logits[1])[0]
     speed_ests = list(logits[2])[0]
     if ret_loc == False:
-        return speed_ests[0].item(), angle_ests.item() #* (np.pi /180.)
+        return speed_ests[0].item()*150, angle_ests.item()*np.pi/180.
     else:
-        return speed_ests[0].item()*100, angle_ests.item()*np.pi/180. , [p.item() for p in position_ests]
+        speed = speed_ests[0].item()*150
+        ang = angle_ests[0].item()*np.pi/180.
+        return speed, ang, [p.item() for p in position_ests]

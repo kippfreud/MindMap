@@ -37,8 +37,6 @@ def generate_dummy_dataset(n_loops=5,
         rots.append(0.)
     rots[-1] = np.pi/2
     rots = rots * n_loops
-    print(len(rots)==len(trans))
-    print(len(rots)==len(visuals))
     for i in range(len(rots)):
         rots[i] += np.random.randn(1)[0]*noise_rots
     for i in range(len(trans)):

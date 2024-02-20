@@ -122,7 +122,7 @@ class Standard_Decoder(nn.Module):
         x = x.permute(0, 1, 4, 2, 3)
         x = self.gaussian_noise(x)
         for step_name in self.conv_order:
-            x = getattr(self, step_name)(x)
+            x = getattr(self, step_name)(x.float())
         flat_x = self.flatten(x)
         outputs = []
         for fc_order in self.fc_orders:

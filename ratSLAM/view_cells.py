@@ -137,7 +137,7 @@ class ViewCells(object):
         scores = self._get_similarity_scores(input)
         # Decrease the decay value of each view cell
         self._global_decay()
-        # Using these scores, we not decide whether to create a new cell,
+        # Using these scores, we decide whether to create a new cell,
         # or activate the most similar cell which exists already
         if self._should_I_make_new_cell(scores):
             # Make new view cell with connections to the currently active

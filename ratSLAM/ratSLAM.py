@@ -49,6 +49,7 @@ class RatSLAM(object):
     # Public Methods
     # ---------------------------------------------------------
 
+    @timethis
     def step(self, input):
         """
         Performs a step of the RatSLAM algorithm by analysing given input data.
@@ -70,7 +71,6 @@ class RatSLAM(object):
             self.prev_rot = self.prev_rot[:self.ma_rot]
         vtrans = np.mean(self.prev_trans)
         vrot = np.mean(self.prev_rot)
-        #print(f"Translation is {vtrans}, Rotation is {vrot}")
         # Update pose cell network, get index of most activated pose cell
         x_pc, y_pc, th_pc = self.pose_cells.step(view_cell, vtrans, vrot)
         # Execute iteration of experience map
