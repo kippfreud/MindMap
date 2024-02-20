@@ -10,17 +10,19 @@ from ratSLAM.utilities import timethis
 
 # -----------------------------------------------------------------------
 
+
 class Odometry(object):
     """
     Odometry Module - for making inferences about speed and direction.
     """
+
     def __init__(self):
         """
         Instantiates Odometry module.
         """
         # We know we start facing some direction, so we set current
         # direction to forwards.
-        self.odometry = [0., 0., 0.]
+        self.odometry = [0.0, 0.0, 0.0]
 
         # Instantiate initial templates for translation and rotation
         self.old_input = None
@@ -79,7 +81,9 @@ class Odometry(object):
         :return: a float; the different between these two angles, clipped between -pi and pi
         """
         angle_diff = self._clip_angle_pi(angle2 - angle1)
-        absolute_angle_diff = abs(self._clip_angle_2pi(angle1) - self._clip_angle_2pi(angle2))
+        absolute_angle_diff = abs(
+            self._clip_angle_2pi(angle1) - self._clip_angle_2pi(angle2)
+        )
         # If absolute_angle_diff is less than pi
         if absolute_angle_diff < (2 * np.pi - absolute_angle_diff):
             if angle_diff > 0:

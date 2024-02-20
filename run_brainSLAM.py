@@ -4,16 +4,16 @@ This will perform the RatSLAM algorithm on the data specified in options.py
 
 # -----------------------------------------------------------------------
 
-import matplotlib.pyplot as plt
 import imageio
+import matplotlib.pyplot as plt
 
+from ratSLAM.data_simulation import generate_dummy_dataset
 from ratSLAM.ratSLAM import RatSLAM
 from ratSLAM.utilities import showTiming
 from utils.get_MJ_dataset import get_mj_dataset
-from ratSLAM.data_simulation import generate_dummy_dataset
 from utils.logger import root_logger
 
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
 if __name__ == "__main__":
 
@@ -22,28 +22,18 @@ if __name__ == "__main__":
     slam = RatSLAM(absolute_rot=True)
 
     data = get_mj_dataset()
-    # data = generate_dummy_dataset(n_loops=4,
-    #                               steps_per_loops=54,
-    #                               noise_rots=1/10,
-    #                               noise_trans=0.,#1/100,
-    #                               noise_templates=10,
-    #                               len_data_templates=20,
-    #                               template_mean=10000,
-    #                               template_sd=10,
-    #                               step_len=0.00001
-    #                               )
     x = []
     y = []
-    with imageio.get_writer('NeuroSLAM-Full.gif', mode='I') as writer:
+    with imageio.get_writer("NeuroSLAM-Full.gif", mode="I") as writer:
         for i, d in enumerate(data):
             if i < 1:
                 continue
-            if i > 1100:
+            if i > 750:
                 break
             slam.step(d)
-            if i%1 == 0 and i>0:
+            if i % 1 == 0 and i > 0:
                 slam.experience_map.plot(writer)
-    plt.scatter(x,y)
+    plt.scatter(x, y)
     plt.show()
     showTiming()
     exit(0)

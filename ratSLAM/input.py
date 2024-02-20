@@ -8,16 +8,19 @@ templates.
 # -----------------------------------------------------------------------
 
 from abc import ABC, abstractmethod
+
 import numpy as np
 
 from utils.use_DI_model import get_odometry
 
 # -----------------------------------------------------------------------
 
+
 class Input(ABC):
     """
     Abstract base class for RatSLAM input
     """
+
     def __init__(self, data):
         """
         instantiates input wrapper.
@@ -51,12 +54,15 @@ class Input(ABC):
         print("ERROR: Function should be overwritten by derived class.")
         exit(0)
 
+
 # -----------------------------------------------------------------------
+
 
 class DummyInput(Input):
     """
     Abstract base class for dummy RatSLAM input; this is input with odometry data annotated.
     """
+
     def __init__(self, data):
         """
         instantiates input wrapper.
@@ -90,13 +96,16 @@ class DummyInput(Input):
         """
         return self.raw_data[1]
 
+
 # -----------------------------------------------------------------------
+
 
 class MattJonesDummyInput(Input):
     """
     Abstract base class for Matt Jones RatSLAM input. The input data is annotated with truth
     values for position and angle so we can cheat at loop closure.
     """
+
     def __init__(self, data):
         """
         instantiates input wrapper.
@@ -128,8 +137,10 @@ class MattJonesDummyInput(Input):
         current_ang = self.raw_data[1][1]
         other_loc = other_data.raw_data[1][0]
         other_ang = other_data.raw_data[1][1]
-        loc_diff = ( (current_loc[0] - other_loc[0])**2 + (current_loc[1] - other_loc[1])**2 ) ** 0.5
-        ang_diff = np.abs(current_ang - other_ang)*(np.pi/180.)
+        loc_diff = (
+            (current_loc[0] - other_loc[0]) ** 2 + (current_loc[1] - other_loc[1]) ** 2
+        ) ** 0.5
+        ang_diff = np.abs(current_ang - other_ang) * (np.pi / 180.0)
         return loc_diff + ang_diff
 
     def compareOdometry(self, other_template):
@@ -138,12 +149,15 @@ class MattJonesDummyInput(Input):
         """
         return get_odometry(self.template)
 
+
 # -----------------------------------------------------------------------
+
 
 class MattJonesInput(Input):
     """
     Matt Jones RatSLAM input.
     """
+
     def __init__(self, data):
         """
         instantiates input wrapper.
@@ -174,7 +188,9 @@ class MattJonesInput(Input):
             self.odom = get_odometry(self.template, True)
         current_loc = self.odom[2]
         other_loc = other_data.odom[2]
-        loc_diff = ( (current_loc[0] - other_loc[0])**2 + (current_loc[1] - other_loc[1])**2 ) ** 0.5
+        loc_diff = (
+            (current_loc[0] - other_loc[0]) ** 2 + (current_loc[1] - other_loc[1]) ** 2
+        ) ** 0.5
         return loc_diff
 
     def compareOdometry(self, other_template):

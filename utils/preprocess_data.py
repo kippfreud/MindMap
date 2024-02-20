@@ -2,17 +2,18 @@
 This should perform necessary preprocessing of Matt Jones' data.
 """
 
-#------------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
-from deep_insight.options import get_opts
-import torch
-import wandb
-from wavelets import WaveletAnalysis
-from joblib import Parallel, delayed
-import numpy as np
 import h5py
+import numpy as np
+import torch
+from joblib import Parallel, delayed
+from wavelets import WaveletAnalysis
 
-#------------------------------------------------------------------------
+import wandb
+from deep_insight.options import get_opts
+
+# ------------------------------------------------------------------------
 
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
@@ -21,8 +22,18 @@ else:
 USE_WANDB = False
 
 
-def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, window_size=100000,
-                     gap_size=50000, sampling_rate=30000, scaling_factor=0.5, num_cores=1, **args):
+def preprocess_input(
+    fp_hdf_out,
+    hdf5_in,
+    average_window=1000,
+    channels=None,
+    window_size=100000,
+    gap_size=50000,
+    sampling_rate=30000,
+    scaling_factor=0.5,
+    num_cores=1,
+    **args
+):
     """
     Transforms raw neural data to frequency space, via wavelet transform implemented currently with aaren-wavelets (https://github.com/aaren/wavelets)
     Saves wavelet transformed data to HDF5 file (N, P, M) - (Number of timepoints, Number of frequencies, Number of channels)
@@ -64,38 +75,60 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
         full_transform = False
 
     # Get estimate for number of frequencies
-    (_, wavelet_frequencies, _) = wavelet_transform(np.ones(window_size), None, sampling_rate, average_window, scaling_factor, **args)
+    (_, wavelet_frequencies, _) = wavelet_transform(
+        np.ones(window_size),
+        None,
+        sampling_rate,
+        average_window,
+        scaling_factor,
+        **args
+    )
     num_fourier_frequencies = len(wavelet_frequencies)
     # Prepare output file
-    hdf5_file = h5py.File(fp_hdf_out, mode='a')
+    hdf5_file = h5py.File(fp_hdf_out, mode="a")
     if "inputs/wavelets" not in hdf5_file:
-        hdf5_file.create_dataset("inputs/wavelets", [output_size, num_fourier_frequencies, len(channels)], np.float32)
-        hdf5_file.create_dataset("inputs/fourier_frequencies", [num_fourier_frequencies], np.float16)
+        hdf5_file.create_dataset(
+            "inputs/wavelets",
+            [output_size, num_fourier_frequencies, len(channels)],
+            np.float32,
+        )
+        hdf5_file.create_dataset(
+            "inputs/fourier_frequencies", [num_fourier_frequencies], np.float16
+        )
         hdf5_file.create_dataset("outputs/position", [output_size, 2], np.float32)
         hdf5_file.create_dataset("outputs/head_direction", [output_size, 1], np.float32)
         hdf5_file.create_dataset("outputs/speed", [output_size, 1], np.float32)
         hdf5_file.create_dataset("outputs/direction", [output_size, 1], np.float32)
-        hdf5_file.create_dataset("outputs/direction_delta", [output_size, 1], np.float32)
+        hdf5_file.create_dataset(
+            "outputs/direction_delta", [output_size, 1], np.float32
+        )
     else:
         print("ERROR!")
         exit(0)
     # Makes saving 5 times faster as last index saving is fancy indexing and therefore slow
-    hdf5_file.create_dataset("inputs/tmp_wavelets", [len(channels), output_size, num_fourier_frequencies], np.float32)
+    hdf5_file.create_dataset(
+        "inputs/tmp_wavelets",
+        [len(channels), output_size, num_fourier_frequencies],
+        np.float32,
+    )
 
     outputs = {
         "position": np.array(hdf5_in["Data/Pos"]),
         "head_direction": np.array(hdf5_in["Data/Theta"]),
         "speed": np.array(hdf5_in["Data/Speed"]),
         "direction": np.array(hdf5_in["Data/Direction"]),
-        "direction_delta": np.array(hdf5_in["Data/DirectionDelta"])
+        "direction_delta": np.array(hdf5_in["Data/DirectionDelta"]),
     }
 
     # Prepare par pool
     par = Parallel(n_jobs=num_cores, verbose=0)
 
     # Start parallel wavelet transformation
-    print('Starting wavelet transformation (n={}, chunks={}, frequencies={})'.format(
-        num_points, num_chunks, num_fourier_frequencies))
+    print(
+        "Starting wavelet transformation (n={}, chunks={}, frequencies={})".format(
+            num_points, num_chunks, num_fourier_frequencies
+        )
+    )
     for c in range(0, num_chunks):
         if full_transform:
             raw_chunk = raw_data[:, c] - mean_signal
@@ -108,39 +141,76 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                 "head_direction": outputs["head_direction"][start:end],
                 "speed": outputs["speed"][start:end],
                 "direction": outputs["direction"][start:end],
-                "direction_delta": outputs["direction_delta"][start:end]
+                "direction_delta": outputs["direction_delta"][start:end],
             }
 
-
-            raw_chunk = raw_data[start: end, channels]
+            raw_chunk = raw_data[start:end, channels]
             # Process raw chunk
-            raw_chunk = preprocess_chunk(raw_chunk, subtract_mean=True, convert_to_milivolt=False)
+            raw_chunk = preprocess_chunk(
+                raw_chunk, subtract_mean=True, convert_to_milivolt=False
+            )
 
         # Calculate wavelet transform
         if full_transform:
-            (wavelet_power, wavelet_frequencies) = wavelet_transform(raw_chunk,
-                                                                        sampling_rate=sampling_rate, scaling_factor=scaling_factor, average_window=average_window, **args)
+            (wavelet_power, wavelet_frequencies) = wavelet_transform(
+                raw_chunk,
+                sampling_rate=sampling_rate,
+                scaling_factor=scaling_factor,
+                average_window=average_window,
+                **args
+            )
             print("ERROR!")
             exit(0)
         else:
-            wavelet_transformed = np.zeros((raw_chunk.shape[0] // average_window, num_fourier_frequencies, raw_chunk.shape[1]))
+            wavelet_transformed = np.zeros(
+                (
+                    raw_chunk.shape[0] // average_window,
+                    num_fourier_frequencies,
+                    raw_chunk.shape[1],
+                )
+            )
             if output_chunk is not None:
-                (wavelet_power, wavelet_frequencies, wavelet_obj) = simple_wavelet_transform(raw_chunk[:, 0], sampling_rate,
-                                                                                             scaling_factor=scaling_factor,
-                                                                                             wave_highpass=2, wave_lowpass=30000)
+                (wavelet_power, wavelet_frequencies, wavelet_obj) = (
+                    simple_wavelet_transform(
+                        raw_chunk[:, 0],
+                        sampling_rate,
+                        scaling_factor=scaling_factor,
+                        wave_highpass=2,
+                        wave_lowpass=30000,
+                    )
+                )
                 for key in output_chunk.keys():
                     try:
-                        output_chunk[key] = np.reshape(output_chunk[key],
-                                                       (wavelet_power.shape[1] // average_window, average_window,
-                                                        output_chunk[key].shape[1]))
+                        output_chunk[key] = np.reshape(
+                            output_chunk[key],
+                            (
+                                wavelet_power.shape[1] // average_window,
+                                average_window,
+                                output_chunk[key].shape[1],
+                            ),
+                        )
                     except:
                         print("WARNING: Output chunk failed to be reshaped")
                     if key != "position":
                         output_chunk[key] = np.mean(output_chunk[key], axis=1)
                     else:
-                        output_chunk[key] = output_chunk["position"][:, round(output_chunk["position"][:].shape[1]/2), :]
+                        output_chunk[key] = output_chunk["position"][
+                            :, round(output_chunk["position"][:].shape[1] / 2), :
+                        ]
 
-            for ind, (wavelet_power, wavelet_frequencies, output) in enumerate(par(delayed(wavelet_transform)(raw_chunk[:, i], output_chunk, sampling_rate, average_window, scaling_factor, **args) for i in range(0, raw_chunk.shape[1]))):
+            for ind, (wavelet_power, wavelet_frequencies, output) in enumerate(
+                par(
+                    delayed(wavelet_transform)(
+                        raw_chunk[:, i],
+                        output_chunk,
+                        sampling_rate,
+                        average_window,
+                        scaling_factor,
+                        **args
+                    )
+                    for i in range(0, raw_chunk.shape[1])
+                )
+            ):
                 wavelet_transformed[:, :, ind] = wavelet_power
 
         # Save in output file
@@ -153,31 +223,61 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
             if c == 0:
                 this_index_start = 0
                 this_index_end = wavelet_index_end - index_gap
-                hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[0: -index_gap, :, :]
-                hdf5_file["outputs/position"][this_index_start:this_index_end,:] = output_chunk["position"][0:-index_gap,:]
-                #hdf5_file["outputs/head_direction"][this_index_start:this_index_end,:] = output_chunk["head_direction"][0:-index_gap,:]
-                #hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][0:-index_gap, :]
-                #hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][0:-index_gap, :]
-                hdf5_file["outputs/speed"][this_index_start:this_index_end,:] = output_chunk["speed"][0:-index_gap,:]
+                hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = (
+                    wavelet_transformed[0:-index_gap, :, :]
+                )
+                hdf5_file["outputs/position"][this_index_start:this_index_end, :] = (
+                    output_chunk["position"][0:-index_gap, :]
+                )
+                # hdf5_file["outputs/head_direction"][this_index_start:this_index_end,:] = output_chunk["head_direction"][0:-index_gap,:]
+                # hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][0:-index_gap, :]
+                # hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][0:-index_gap, :]
+                hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = (
+                    output_chunk["speed"][0:-index_gap, :]
+                )
             elif c == num_chunks - 1:  # Make sure the last one fits fully
                 this_index_start = wavelet_index_start + index_gap
                 this_index_end = wavelet_index_end
-                hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[index_gap::, :, :]
-                hdf5_file["outputs/position"][this_index_start:this_index_end, :] = output_chunk["position"][index_gap::, :]
-                hdf5_file["outputs/head_direction"][this_index_start:this_index_end, :] = output_chunk["head_direction"][index_gap::, :]
-                hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][index_gap::, :]
-                hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][index_gap::, :]
-                hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = output_chunk["speed"][index_gap::, :]
+                hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = (
+                    wavelet_transformed[index_gap::, :, :]
+                )
+                hdf5_file["outputs/position"][this_index_start:this_index_end, :] = (
+                    output_chunk["position"][index_gap::, :]
+                )
+                hdf5_file["outputs/head_direction"][
+                    this_index_start:this_index_end, :
+                ] = output_chunk["head_direction"][index_gap::, :]
+                hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = (
+                    output_chunk["direction"][index_gap::, :]
+                )
+                hdf5_file["outputs/direction_delta"][
+                    this_index_start:this_index_end, :
+                ] = output_chunk["direction_delta"][index_gap::, :]
+                hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = (
+                    output_chunk["speed"][index_gap::, :]
+                )
             else:
                 this_index_start = wavelet_index_start + index_gap
                 this_index_end = wavelet_index_end - index_gap
-                hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = wavelet_transformed[index_gap: -index_gap, :, :]
+                hdf5_file["inputs/wavelets"][this_index_start:this_index_end, :, :] = (
+                    wavelet_transformed[index_gap:-index_gap, :, :]
+                )
 
-                hdf5_file["outputs/position"][this_index_start:this_index_end, :] = output_chunk["position"][index_gap:-index_gap, :]
-                hdf5_file["outputs/head_direction"][this_index_start:this_index_end, :] = output_chunk["head_direction"][index_gap:-index_gap, :]
-                hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = output_chunk["direction"][index_gap:-index_gap, :]
-                hdf5_file["outputs/direction_delta"][this_index_start:this_index_end, :] = output_chunk["direction_delta"][index_gap:-index_gap, :]
-                hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = output_chunk["speed"][index_gap:-index_gap, :]
+                hdf5_file["outputs/position"][this_index_start:this_index_end, :] = (
+                    output_chunk["position"][index_gap:-index_gap, :]
+                )
+                hdf5_file["outputs/head_direction"][
+                    this_index_start:this_index_end, :
+                ] = output_chunk["head_direction"][index_gap:-index_gap, :]
+                hdf5_file["outputs/direction"][this_index_start:this_index_end, :] = (
+                    output_chunk["direction"][index_gap:-index_gap, :]
+                )
+                hdf5_file["outputs/direction_delta"][
+                    this_index_start:this_index_end, :
+                ] = output_chunk["direction_delta"][index_gap:-index_gap, :]
+                hdf5_file["outputs/speed"][this_index_start:this_index_end, :] = (
+                    output_chunk["speed"][index_gap:-index_gap, :]
+                )
         hdf5_file.flush()
     # 7.) Put frequencies in and close file
     if full_transform:
@@ -214,7 +314,16 @@ def preprocess_chunk(raw_chunk, subtract_mean=True, convert_to_milivolt=False):
         raw_chunk = raw_chunk * (0.195 / 1000)
     return raw_chunk
 
-def wavelet_transform(signal, output_chunk, sampling_rate, average_window=1000, scaling_factor=0.25, wave_highpass=2, wave_lowpass=30000):
+
+def wavelet_transform(
+    signal,
+    output_chunk,
+    sampling_rate,
+    average_window=1000,
+    scaling_factor=0.25,
+    wave_highpass=2,
+    wave_lowpass=30000,
+):
     """
     Calculates the wavelet transform for each point in signal, then averages
     each window and returns together fourier frequencies
@@ -239,8 +348,13 @@ def wavelet_transform(signal, output_chunk, sampling_rate, average_window=1000, 
     wavelet_frequencies : (M, 1) array_like
         Corresponding frequencies to wavelet_power
     """
-    (wavelet_power, wavelet_frequencies, wavelet_obj) = simple_wavelet_transform(signal, sampling_rate,
-                                                                                 scaling_factor=scaling_factor, wave_highpass=wave_highpass, wave_lowpass=wave_lowpass)
+    (wavelet_power, wavelet_frequencies, wavelet_obj) = simple_wavelet_transform(
+        signal,
+        sampling_rate,
+        scaling_factor=scaling_factor,
+        wave_highpass=wave_highpass,
+        wave_lowpass=wave_lowpass,
+    )
 
     # Average over window
     if average_window is not 1:
@@ -250,14 +364,23 @@ def wavelet_transform(signal, output_chunk, sampling_rate, average_window=1000, 
         #                                         (wavelet_power.shape[1] // average_window, average_window , output_chunk[key].shape[1]) )
         #         output_chunk[key] = np.mean(output_chunk[key], axis=1)
         wavelet_power = np.reshape(
-            wavelet_power, (wavelet_power.shape[0], wavelet_power.shape[1] // average_window, average_window))
+            wavelet_power,
+            (
+                wavelet_power.shape[0],
+                wavelet_power.shape[1] // average_window,
+                average_window,
+            ),
+        )
         wavelet_power = np.mean(wavelet_power, axis=2).transpose()
     else:
         wavelet_power = wavelet_power.transpose()
 
     return wavelet_power, wavelet_frequencies, output_chunk
 
-def create_or_update(hdf5_file, dataset_name, dataset_shape, dataset_type, dataset_value):
+
+def create_or_update(
+    hdf5_file, dataset_name, dataset_shape, dataset_type, dataset_value
+):
     """
     Create or update dataset in HDF5 file
     Parameters
@@ -280,7 +403,10 @@ def create_or_update(hdf5_file, dataset_name, dataset_shape, dataset_type, datas
         hdf5_file[dataset_name][:] = dataset_value
     hdf5_file.flush()
 
-def preprocess_output(fp_hdf_out, hdf5_with_output, average_window=1000, sampling_rate=30000):
+
+def preprocess_output(
+    fp_hdf_out, hdf5_with_output, average_window=1000, sampling_rate=30000
+):
     """
     Write behaviours to decode into HDF5 file
     Parameters
@@ -298,49 +424,98 @@ def preprocess_output(fp_hdf_out, hdf5_with_output, average_window=1000, samplin
     sampling_rate : int, optional
         Sampling rate of raw ephys, by default 30000
     """
-    hdf5_file = h5py.File(fp_hdf_out, mode='a')
+    hdf5_file = h5py.File(fp_hdf_out, mode="a")
 
     # Get size of wavelets
-    input_length = hdf5_file['inputs/wavelets'].shape[0]
+    input_length = hdf5_file["inputs/wavelets"].shape[0]
 
     # Get positions of both LEDs
     raw_timestamps = np.array(hdf5_with_output["Data/Timestamps"])
 
-
     raw_timestamps = raw_timestamps[()]  # Slightly faster than np.array
-    output_x_led1 = np.interp(raw_timestamps[np.arange(0, raw_timestamps.shape[0],
-                                                       average_window)], output_timestamps, output[:, 0])
-    output_y_led1 = np.interp(raw_timestamps[np.arange(0, raw_timestamps.shape[0],
-                                                       average_window)], output_timestamps, output[:, 1])
-    output_x_led2 = np.interp(raw_timestamps[np.arange(0, raw_timestamps.shape[0],
-                                                       average_window)], output_timestamps, output[:, 2])
-    output_y_led2 = np.interp(raw_timestamps[np.arange(0, raw_timestamps.shape[0],
-                                                       average_window)], output_timestamps, output[:, 3])
-    raw_positions = np.array([output_x_led1, output_y_led1, output_x_led2, output_y_led2]).transpose()
+    output_x_led1 = np.interp(
+        raw_timestamps[np.arange(0, raw_timestamps.shape[0], average_window)],
+        output_timestamps,
+        output[:, 0],
+    )
+    output_y_led1 = np.interp(
+        raw_timestamps[np.arange(0, raw_timestamps.shape[0], average_window)],
+        output_timestamps,
+        output[:, 1],
+    )
+    output_x_led2 = np.interp(
+        raw_timestamps[np.arange(0, raw_timestamps.shape[0], average_window)],
+        output_timestamps,
+        output[:, 2],
+    )
+    output_y_led2 = np.interp(
+        raw_timestamps[np.arange(0, raw_timestamps.shape[0], average_window)],
+        output_timestamps,
+        output[:, 3],
+    )
+    raw_positions = np.array(
+        [output_x_led1, output_y_led1, output_x_led2, output_y_led2]
+    ).transpose()
 
     # Clean raw_positions and get centre
-    positions_smooth = pd.DataFrame(raw_positions.copy()).interpolate(
-        limit_direction='both').rolling(5, min_periods=1).mean().get_values()
-    position = np.array([(positions_smooth[:, 0] + positions_smooth[:, 2]) / 2,
-                         (positions_smooth[:, 1] + positions_smooth[:, 3]) / 2]).transpose()
+    positions_smooth = (
+        pd.DataFrame(raw_positions.copy())
+        .interpolate(limit_direction="both")
+        .rolling(5, min_periods=1)
+        .mean()
+        .get_values()
+    )
+    position = np.array(
+        [
+            (positions_smooth[:, 0] + positions_smooth[:, 2]) / 2,
+            (positions_smooth[:, 1] + positions_smooth[:, 3]) / 2,
+        ]
+    ).transpose()
 
     # Also get head direction and speed from positions
-    speed = stats.calculate_speed_from_position(position, interval=1/(sampling_rate//average_window), smoothing=3)
-    head_direction = stats.calculate_head_direction_from_leds(positions_smooth, return_as_deg=False)
+    speed = stats.calculate_speed_from_position(
+        position, interval=1 / (sampling_rate // average_window), smoothing=3
+    )
+    head_direction = stats.calculate_head_direction_from_leds(
+        positions_smooth, return_as_deg=False
+    )
 
     # Create and save datasets in HDF5 File
-    create_or_update(hdf5_file, dataset_name="outputs/raw_position",
-                          dataset_shape=[input_length, 4], dataset_type=np.float16, dataset_value=raw_positions[0: input_length, :])
-    create_or_update(hdf5_file, dataset_name="outputs/position",
-                          dataset_shape=[input_length, 2], dataset_type=np.float16, dataset_value=position[0: input_length, :])
-    create_or_update(hdf5_file, dataset_name="outputs/head_direction", dataset_shape=[
-                          input_length, 1], dataset_type=np.float16, dataset_value=head_direction[0: input_length, np.newaxis])
-    create_or_update(hdf5_file, dataset_name="outputs/speed",
-                          dataset_shape=[input_length, 1], dataset_type=np.float16, dataset_value=speed[0: input_length, np.newaxis])
+    create_or_update(
+        hdf5_file,
+        dataset_name="outputs/raw_position",
+        dataset_shape=[input_length, 4],
+        dataset_type=np.float16,
+        dataset_value=raw_positions[0:input_length, :],
+    )
+    create_or_update(
+        hdf5_file,
+        dataset_name="outputs/position",
+        dataset_shape=[input_length, 2],
+        dataset_type=np.float16,
+        dataset_value=position[0:input_length, :],
+    )
+    create_or_update(
+        hdf5_file,
+        dataset_name="outputs/head_direction",
+        dataset_shape=[input_length, 1],
+        dataset_type=np.float16,
+        dataset_value=head_direction[0:input_length, np.newaxis],
+    )
+    create_or_update(
+        hdf5_file,
+        dataset_name="outputs/speed",
+        dataset_shape=[input_length, 1],
+        dataset_type=np.float16,
+        dataset_value=speed[0:input_length, np.newaxis],
+    )
     hdf5_file.flush()
     hdf5_file.close()
 
-def simple_wavelet_transform(signal, sampling_rate, scaling_factor=0.25, wave_lowpass=None, wave_highpass=None):
+
+def simple_wavelet_transform(
+    signal, sampling_rate, scaling_factor=0.25, wave_lowpass=None, wave_highpass=None
+):
     """
     Simple wavelet transformation of signal
     Parameters
@@ -369,23 +544,36 @@ def simple_wavelet_transform(signal, sampling_rate, scaling_factor=0.25, wave_lo
     wavelet_frequencies = wavelet_obj.fourier_frequencies
 
     if wave_lowpass or wave_highpass:
-        wavelet_power = wavelet_power[(wavelet_frequencies < wave_lowpass) & (wavelet_frequencies > wave_highpass), :]
-        wavelet_frequencies = wavelet_frequencies[(wavelet_frequencies < wave_lowpass) & (wavelet_frequencies > wave_highpass)]
+        wavelet_power = wavelet_power[
+            (wavelet_frequencies < wave_lowpass)
+            & (wavelet_frequencies > wave_highpass),
+            :,
+        ]
+        wavelet_frequencies = wavelet_frequencies[
+            (wavelet_frequencies < wave_lowpass) & (wavelet_frequencies > wave_highpass)
+        ]
 
     return (wavelet_power, wavelet_frequencies, wavelet_obj)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    if USE_WANDB: wandb.init(project="my-project")
+    if USE_WANDB:
+        wandb.init(project="my-project")
 
-    HDF5_PATH = 'data/Nongrid/Elliott-2.mat'
-    hdf5_file = h5py.File(HDF5_PATH, mode='r')
+    HDF5_PATH = "data/Nongrid/Elliott-2.mat"
+    hdf5_file = h5py.File(HDF5_PATH, mode="r")
     # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
-    training_options = get_opts(HDF5_PATH, train_test_times=(np.array([]), np.array([])))
+    training_options = get_opts(
+        HDF5_PATH, train_test_times=(np.array([]), np.array([]))
+    )
 
-    preprocess_input("data/Elliott-NG.h5", hdf5_file, sampling_rate=training_options['sampling_rate'],
-                     average_window=250,
-                     channels=list(range(training_options['channels'])))
+    preprocess_input(
+        "data/Elliott-NG.h5",
+        hdf5_file,
+        sampling_rate=training_options["sampling_rate"],
+        average_window=250,
+        channels=list(range(training_options["channels"])),
+    )
 
 print("0")

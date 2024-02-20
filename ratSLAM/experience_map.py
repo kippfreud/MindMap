@@ -4,14 +4,15 @@ Contains experience map module.
 
 # -----------------------------------------------------------------------
 
-import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 
 from ratSLAM.utilities import timethis
 from utils.misc import rotate
 
 # -----------------------------------------------------------------------
+
 
 class ExperienceNode(object):
     """
@@ -20,6 +21,7 @@ class ExperienceNode(object):
     map, thus it must store its position in the map and corresponding activations
     of pose and view cell modules.
     """
+
     def __init__(self, x_pc, y_pc, th_pc, x_em, y_em, th_em, view_cell):
         """
         Instantiates the experience node.
@@ -78,7 +80,9 @@ class ExperienceNode(object):
         :return: a float; the different between these two angles, clipped between -pi and pi
         """
         angle_diff = self._clip_angle_pi(angle2 - angle1)
-        absolute_angle_diff = abs(self._clip_angle_2pi(angle1) - self._clip_angle_2pi(angle2))
+        absolute_angle_diff = abs(
+            self._clip_angle_2pi(angle1) - self._clip_angle_2pi(angle2)
+        )
         # If absolute_angle_diff is less than pi
         if absolute_angle_diff < (2 * np.pi - absolute_angle_diff):
             if angle_diff > 0:
@@ -119,12 +123,15 @@ class ExperienceNode(object):
             angle -= 2 * np.pi
         return angle
 
+
 # -----------------------------------------------------------------------
+
 
 class ExperienceLink(object):
     """
     Class for a link between ExperienceNode instances on the experience map graph
     """
+
     def __init__(self, parent, child, absolute_th, dist, relative_th):
         """
         Instantiates the ExperienceLink.
@@ -141,14 +148,24 @@ class ExperienceLink(object):
         self.absolute_th = absolute_th
         self.relative_th = relative_th
 
+
 # -----------------------------------------------------------------------
+
 
 class ExperienceMap(object):
     """
     Experience map module.
     """
-    def __init__(self, x_dim, y_dim, th_dim, dist_threshold=10,
-                 graph_relaxation_cycles=100, correction_rate=0.5):
+
+    def __init__(
+        self,
+        x_dim,
+        y_dim,
+        th_dim,
+        dist_threshold=10,
+        graph_relaxation_cycles=100,
+        correction_rate=0.5,
+    ):
         """
         Instantiates the Experience Map.
 
@@ -179,7 +196,7 @@ class ExperienceMap(object):
         # experience node.
         self.accum_diff_x = 0
         self.accum_diff_y = 0
-        self.accum_th = 0#np.pi / 2
+        self.accum_th = 0  # np.pi / 2
         # history of previously visited experience nodes
         self.history = []
         # Minimum distance from active experience node required to create
@@ -192,18 +209,18 @@ class ExperienceMap(object):
         self.prev_visited = []
 
         # Plotting
-        self.fig = plt.figure(figsize=(15., 6.))
+        self.fig = plt.figure(figsize=(15.0, 6.0))
         self.fig.suptitle("Experience Map Generation")
-        self.position_ax = self.fig.add_subplot(121, facecolor='#E6E6E6')
+        self.position_ax = self.fig.add_subplot(121, facecolor="#E6E6E6")
         self.position_ax.set_xlim([0, 750])
         self.position_ax.set_ylim([0, 600])
-        self.compass_ax = self.fig.add_subplot(122, polar=True, facecolor='#E6E6E6')
+        self.compass_ax = self.fig.add_subplot(122, polar=True, facecolor="#E6E6E6")
         self.compass_ax.set_ylim(0, 5)
         self.compass_ax.set_yticks(np.arange(0, 5, 1.0))
         # radar green, solid grid lines
-        plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
-        plt.rc('xtick', labelsize=15)
-        plt.rc('ytick', labelsize=15)
+        plt.rc("grid", color="#316931", linewidth=1, linestyle="-")
+        plt.rc("xtick", labelsize=15)
+        plt.rc("ytick", labelsize=15)
         plt.ion()
 
     # ---------------------------------------------------------
@@ -217,9 +234,9 @@ class ExperienceMap(object):
         ..todo:: improve this so axis do not have to be preset
         """
         # radar green, solid grid lines
-        plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
-        plt.rc('xtick', labelsize=15)
-        plt.rc('ytick', labelsize=15)
+        plt.rc("grid", color="#316931", linewidth=1, linestyle="-")
+        plt.rc("xtick", labelsize=15)
+        plt.rc("ytick", labelsize=15)
 
         self.position_ax.clear()
         self.compass_ax.clear()
@@ -229,40 +246,92 @@ class ExperienceMap(object):
         self.compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
 
         # POSITION AXIS
-        true_p_adj = rotate(self.true_pose[0]-self.initial_pose[0],
-                            degrees=self.initial_pose[1])
+        true_p_adj = rotate(
+            self.true_pose[0] - self.initial_pose[0], degrees=self.initial_pose[1]
+        )
         self.prev_visited.append((true_p_adj[0], true_p_adj[1]))
-        self.position_ax.scatter([t[0] for t in self.prev_visited], [t[1] for t in self.prev_visited], c="pink", label="Visited Locations")
-        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="lightgreen", s=60, label="Current Location")
-        self.position_ax.scatter([true_p_adj[0]], [true_p_adj[1]], c="green", label="Estimated Current Location")
+        self.position_ax.scatter(
+            [t[0] for t in self.prev_visited],
+            [t[1] for t in self.prev_visited],
+            c="pink",
+            label="Visited Locations",
+        )
+        self.position_ax.scatter(
+            [true_p_adj[0]],
+            [true_p_adj[1]],
+            c="lightgreen",
+            s=60,
+            label="Current Location",
+        )
+        self.position_ax.scatter(
+            [true_p_adj[0]],
+            [true_p_adj[1]],
+            c="green",
+            label="Estimated Current Location",
+        )
         pos = {e: (e.x_em, e.y_em) for e in self.G.nodes}
-        cols = ["#004650" if e==self.current_exp else "#933A16" for e in self.G.nodes]
-        nx.draw(self.G, pos=pos, node_color=cols, node_size=50, ax=self.position_ax, label="Experience Map")
+        cols = ["#004650" if e == self.current_exp else "#933A16" for e in self.G.nodes]
+        nx.draw(
+            self.G,
+            pos=pos,
+            node_color=cols,
+            node_size=50,
+            ax=self.position_ax,
+            label="Experience Map",
+        )
         self.position_ax.legend()
         # COMPASS AXIS
 
         print(f"True th = {self.true_pose[1][0]*np.pi/180}")
         print(f"{self.true_pose[1][0]*np.pi/180 - self.accum_th}")
-        self.compass_ax.arrow(0, 0,
-                             # -5.,5.,
-                             self.true_pose[1][0]*np.pi/180, self.true_speed/2,
-                             alpha=0.5, width=0.1,
-                             edgecolor='black', facecolor='green', lw=1.3, zorder=3)
-        self.compass_ax.arrow(0, 0,
-                              # -5.,5.,
-                              self.accum_th, self.true_speed/2,
-                              alpha=0.5, width=0.1,
-                              edgecolor='black', facecolor='red', lw=1.3, zorder=3)
+        self.compass_ax.arrow(
+            0,
+            0,
+            # -5.,5.,
+            self.true_pose[1][0] * np.pi / 180,
+            self.true_speed / 2,
+            alpha=0.5,
+            width=0.1,
+            edgecolor="black",
+            facecolor="green",
+            lw=1.3,
+            zorder=3,
+        )
+        self.compass_ax.arrow(
+            0,
+            0,
+            # -5.,5.,
+            self.accum_th,
+            self.true_speed / 2,
+            alpha=0.5,
+            width=0.1,
+            edgecolor="black",
+            facecolor="red",
+            lw=1.3,
+            zorder=3,
+        )
 
         plt.pause(0.005)
 
-        image = np.frombuffer(plt.gcf().canvas.tostring_rgb(), dtype='uint8')
+        image = np.frombuffer(plt.gcf().canvas.tostring_rgb(), dtype="uint8")
         # image = image.reshape(plt.gcf().canvas.get_width_height()[::-1] + (3,))
-        image = image.reshape((int(6075000/(1500*3)), 1500, 3)) #Windows quick fix ..todo: fix for windows
+        image = image.reshape(
+            (int(6075000 / (1500 * 3)), 1500, 3)
+        )  # Windows quick fix ..todo: fix for windows
         writer.append_data(image)
 
     @timethis
-    def step(self, view_cell, translation, rotation, x_pc, y_pc, th_pc, true_pose=None, true_odometry=None):
+    def step(
+        self,
+        view_cell,
+        translation,
+        rotation,
+        x_pc,
+        y_pc,
+        th_pc,
+        true_pose=None,
+        true_odometry=None,
+    ):
         """
         Execute an iteration of the experience map.
 
@@ -278,10 +347,13 @@ class ExperienceMap(object):
         if self.true_pose is None:
             self.true_speed = 0
         else:
-            self.true_speed = ((self.true_pose[0][0] - true_pose[0][0])**2 + (self.true_pose[0][1] - true_pose[0][1])**2)**0.5
+            self.true_speed = (
+                (self.true_pose[0][0] - true_pose[0][0]) ** 2
+                + (self.true_pose[0][1] - true_pose[0][1]) ** 2
+            ) ** 0.5
         self.true_pose = true_pose
         # Use translation and rotation to update current position estimates of agent.
-        #self.accum_th = self._clip_angle_pi(self.accum_th - rotation)
+        # self.accum_th = self._clip_angle_pi(self.accum_th - rotation)
         self.accum_th = self._clip_angle_pi(rotation)
 
         self.accum_diff_x += translation * np.cos(self.accum_th)
@@ -291,16 +363,19 @@ class ExperienceMap(object):
             distance = 0
         else:
             distance = np.sqrt(
-                self._min_dist(self.current_exp.x_pc, x_pc, self.dims[0])**2 + \
-                self._min_dist(self.current_exp.y_pc, y_pc, self.dims[1])**2 #+ \
-                #self._min_dist(self.current_exp.th_pc, th_pc, self.dims[2])**2
+                self._min_dist(self.current_exp.x_pc, x_pc, self.dims[0]) ** 2
+                + self._min_dist(self.current_exp.y_pc, y_pc, self.dims[1]) ** 2  # + \
+                # self._min_dist(self.current_exp.th_pc, th_pc, self.dims[2])**2
             )
         # Keep track of whether to adjust map (in case of loop closure)
         adjust_map = False
         # If we have moved above a threshold distance from the previous experience node,
         # or if the currently active view cell is new and thus has no corresponding
         # experience, we will create one.
-        if view_cell.get_num_associated_experiences() == 0 or distance > self._dist_threshold:
+        if (
+            view_cell.get_num_associated_experiences() == 0
+            or distance > self._dist_threshold
+        ):
             # Make a new experience
             exp = self._create_experience(x_pc, y_pc, th_pc, view_cell)
             # Set this experience to the currently active experience
@@ -320,9 +395,9 @@ class ExperienceMap(object):
             num_candidate_matches = 0
             for experience in view_cell.iter_experiences():
                 distance = np.sqrt(
-                    self._min_dist(experience.x_pc, x_pc, self.dims[0])**2 + \
-                    self._min_dist(experience.y_pc, y_pc, self.dims[1])**2 #+ \
-                    #self._min_dist(experience.th_pc, th_pc, self.dims[2])**2
+                    self._min_dist(experience.x_pc, x_pc, self.dims[0]) ** 2
+                    + self._min_dist(experience.y_pc, y_pc, self.dims[1]) ** 2  # + \
+                    # self._min_dist(experience.th_pc, th_pc, self.dims[2])**2
                 )
                 distances_from_center.append(distance)
                 if distance < self._dist_threshold:
@@ -330,7 +405,9 @@ class ExperienceMap(object):
             if num_candidate_matches > 1:
                 # Currently there is no implementation for when there are multiple matching nodes
                 # ..todo: Implement an algorithm for dealing with this situation, though it rarely happens
-                print("WARNING: Multiple matching experience nodes, no implementation for dealing with this")
+                print(
+                    "WARNING: Multiple matching experience nodes, no implementation for dealing with this"
+                )
             else:
                 # If there is at most one candidate experience node match
                 min_distance_index = np.argmin(distances_from_center)
@@ -345,8 +422,13 @@ class ExperienceMap(object):
                             link_exists = True
                     # If a link does not exist, we create one.
                     if not link_exists:
-                        self._link(self.current_exp, matched_exp, self.accum_diff_x,
-                                   self.accum_diff_y, self.accum_th)
+                        self._link(
+                            self.current_exp,
+                            matched_exp,
+                            self.accum_diff_x,
+                            self.accum_diff_y,
+                            self.accum_th,
+                        )
                 # If there is no matched experience node, create a new experience node.
                 if matched_exp is None:
                     matched_exp = self._create_experience(x_pc, y_pc, th_pc, view_cell)
@@ -360,8 +442,8 @@ class ExperienceMap(object):
             print(f"At end of step AccumTh = {self.accum_th}")
             return
         # if we do need to adjust the map, do it now.
-        #..todo: reimplement map adjustment
-        #self._adjust_map()
+        # ..todo: reimplement map adjustment
+        # self._adjust_map()
         return
 
     # ---------------------------------------------------------
@@ -380,23 +462,44 @@ class ExperienceMap(object):
                     experience_1 = link.child
                     # Calculate where experience_1 thinks experience_2 should be based
                     # on the information contained in the link.
-                    link_x = experience_0.x_em + link.dist * np.cos(experience_0.th_em + link.relative_th)
-                    link_y = experience_0.y_em + link.dist * np.sin(experience_0.th_em + link.relative_th)
+                    link_x = experience_0.x_em + link.dist * np.cos(
+                        experience_0.th_em + link.relative_th
+                    )
+                    link_y = experience_0.y_em + link.dist * np.sin(
+                        experience_0.th_em + link.relative_th
+                    )
                     # Correct locations of experience_0 and experience_1 by equal but opposite amounts.
                     # A 0.5 correction parameter means that e0 and e1 will be  fully corrected
                     # based on e0's link information.
-                    experience_0.x_em = experience_0.x_em + (experience_1.x_em - link_x) * self._correction_rate
-                    experience_0.y_em = experience_0.y_em + (experience_1.y_em - link_y) * self._correction_rate
-                    experience_1.x_em = experience_1.x_em - (experience_1.x_em - link_x) * self._correction_rate
-                    experience_1.y_em = experience_1.y_em - (experience_1.y_em - link_y) * self._correction_rate
+                    experience_0.x_em = (
+                        experience_0.x_em
+                        + (experience_1.x_em - link_x) * self._correction_rate
+                    )
+                    experience_0.y_em = (
+                        experience_0.y_em
+                        + (experience_1.y_em - link_y) * self._correction_rate
+                    )
+                    experience_1.x_em = (
+                        experience_1.x_em
+                        - (experience_1.x_em - link_x) * self._correction_rate
+                    )
+                    experience_1.y_em = (
+                        experience_1.y_em
+                        - (experience_1.y_em - link_y) * self._correction_rate
+                    )
                     # Determine the difference between the angle experience_0 thinks experience_1 is facing and
                     # the angle that experience_1 thinks that it is facing
-                    th_diff = self._get_angle_diff(experience_0.th_em + link.relative_th,
-                                                   experience_1.th_em)
+                    th_diff = self._get_angle_diff(
+                        experience_0.th_em + link.relative_th, experience_1.th_em
+                    )
                     # Again, correct estimated angles of experience_0 and experience_1 by equal and
                     # opposite amounts
-                    experience_0.th_em = self._clip_angle_pi(experience_0.th_em + th_diff*self._correction_rate)
-                    experience_1.th_em = self._clip_angle_pi(experience_1.th_em - th_diff*self._correction_rate)
+                    experience_0.th_em = self._clip_angle_pi(
+                        experience_0.th_em + th_diff * self._correction_rate
+                    )
+                    experience_1.th_em = self._clip_angle_pi(
+                        experience_1.th_em - th_diff * self._correction_rate
+                    )
         return
 
     def _create_experience(self, x_pc, y_pc, th_pc, view_cell):
@@ -423,7 +526,13 @@ class ExperienceMap(object):
         self.G.add_node(experience)
         # Add links if current experience is not None.
         if self.current_exp is not None:
-            self._link(self.current_exp, experience, self.accum_diff_x, self.accum_diff_y, self.accum_th)
+            self._link(
+                self.current_exp,
+                experience,
+                self.accum_diff_x,
+                self.accum_diff_y,
+                self.accum_th,
+            )
         # Add to view cells list of associated experience nodes
         view_cell.add_associated_experience(experience)
         # Return created experience
@@ -441,7 +550,7 @@ class ExperienceMap(object):
         """
         if self.G.has_edge(parent, child):
             print("WARNING: This edge already exists!")
-        self.G.add_edge(parent, child, weight=(x_dif**2 + y_dif**2)**0.5)
+        self.G.add_edge(parent, child, weight=(x_dif**2 + y_dif**2) ** 0.5)
         parent.link_to(child, x_dif, y_dif, th)
 
     def _min_dist(self, d1, d2, wrap_at):
@@ -463,7 +572,9 @@ class ExperienceMap(object):
         :return: a float; the different between these two angles, clipped between -pi and pi
         """
         angle_diff = self._clip_angle_pi(angle2 - angle1)
-        absolute_angle_diff = abs(self._clip_angle_2pi(angle1) - self._clip_angle_2pi(angle2))
+        absolute_angle_diff = abs(
+            self._clip_angle_2pi(angle1) - self._clip_angle_2pi(angle2)
+        )
         # If absolute_angle_diff is less than pi
         if absolute_angle_diff < (2 * np.pi - absolute_angle_diff):
             if angle_diff > 0:

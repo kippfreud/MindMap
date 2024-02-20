@@ -7,11 +7,11 @@ Class containing the main ratSLAM class
 import numpy as np
 
 from ratSLAM.experience_map import ExperienceMap
+from ratSLAM.input import Input
 from ratSLAM.odometry import Odometry
 from ratSLAM.pose_cells import PoseCells
-from ratSLAM.view_cells import ViewCells
-from ratSLAM.input import Input
 from ratSLAM.utilities import timethis
+from ratSLAM.view_cells import ViewCells
 
 # -----------------------------------------------------------------------
 
@@ -21,6 +21,7 @@ TH_DIM = 36
 
 # -----------------------------------------------------------------------
 
+
 class RatSLAM(object):
     """
     RatSLAM module.
@@ -28,6 +29,7 @@ class RatSLAM(object):
     Divided into 4 submodules: odometry, view cells, pose
     cells, and experience map.
     """
+
     def __init__(self, absolute_rot=False):
         """
         Initializes the ratslam modules.
@@ -65,17 +67,24 @@ class RatSLAM(object):
         # Perform moving average smoothing
         self.prev_trans = [vtrans] + self.prev_trans
         if len(self.prev_trans) > self.ma_trans:
-            self.prev_trans = self.prev_trans[:self.ma_trans]
+            self.prev_trans = self.prev_trans[: self.ma_trans]
         self.prev_rot = [vrot] + self.prev_rot
         if len(self.prev_rot) > self.ma_rot:
-            self.prev_rot = self.prev_rot[:self.ma_rot]
+            self.prev_rot = self.prev_rot[: self.ma_rot]
         vtrans = np.mean(self.prev_trans)
         vrot = np.mean(self.prev_rot)
         # Update pose cell network, get index of most activated pose cell
         x_pc, y_pc, th_pc = self.pose_cells.step(view_cell, vtrans, vrot)
         # Execute iteration of experience map
-        self.experience_map.step(view_cell, vtrans, vrot, x_pc, y_pc, th_pc,
-                                 true_pose=(input.raw_data[1][0],input.raw_data[1][1]),
-                                 true_odometry=(input.raw_data[1][2], input.raw_data[1][1]))
-                                 #true_odometry=(input.raw_data[1][3], input.raw_data[1][2])) #ORIGINAL
-        self.last_pose = (input.raw_data[1][0],input.raw_data[1][2])
+        self.experience_map.step(
+            view_cell,
+            vtrans,
+            vrot,
+            x_pc,
+            y_pc,
+            th_pc,
+            true_pose=(input.raw_data[1][0], input.raw_data[1][1]),
+            true_odometry=(input.raw_data[1][2], input.raw_data[1][1]),
+        )
+        # true_odometry=(input.raw_data[1][3], input.raw_data[1][2])) #ORIGINAL
+        self.last_pose = (input.raw_data[1][0], input.raw_data[1][2])

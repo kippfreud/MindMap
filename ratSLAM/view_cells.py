@@ -16,6 +16,7 @@ class ViewCell(object):
     """
     A single view cell.
     """
+
     def __init__(self, input, x_pc, y_pc, th_pc):
         """
         :param template: data associated with this view cell.
@@ -97,12 +98,15 @@ class ViewCell(object):
         """
         self._decay_value -= self._global_decay
 
+
 # -----------------------------------------------------------------------
+
 
 class ViewCells(object):
     """
     View Cell Module
     """
+
     def __init__(self):
         """
         Instantiates the View Cell module
@@ -207,7 +211,7 @@ class ViewCells(object):
         """
         if self.size == 0:
             return True
-        if np.min(scores) > 20: #..todo: global param
+        if np.min(scores) > 20:  # ..todo: global param
             return True
         return False
 
