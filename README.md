@@ -1,8 +1,63 @@
-Making maps with rats!
+## *MindMap*
 
-----------------------------------------
+---
 
-First download electropsyiology data from 
-https://ndownloader.figshare.com/files/20135627
+This repo contains functionality to train deep neural decoders for any behavioural variable which can be expressed as 
+a time series. The architecture for the networks is inspired by those described by 
+[Frey et. al (2021)](https://elifesciences.org/articles/66551). We use a pyTorch implementation for added network 
+versatility. 
 
-https://pytorch.org/
+This repo also contains functionality for using these decoders to perform BrainSLAM - 
+a SLAM algorithm designed to operate using neural
+LFP data (as opposed to camera or lidar input, as traditional SLAM algorithms would).
+
+<img src="thumbnail.png" alt="drawing" width="200"/>
+
+This repo was used in both https://arxiv.org/abs/2402.00588 and https://www.biorxiv.org/content/10.1101/2024.02.01.578423v1.abstract
+
+Though one could use this repo to decode any variable, it has been built with spatial variables in mind
+(namely position, direction, and speed).
+
+---
+
+### Setup
+
+Install torch and the given requirements. 
+
+To train networks, you need at least one HDF5 file in the data/ directory.
+
+This file hierarchy should look like:
+```
+-- inputs
+---- wavelets
+---- fourier_frequencies
+-- outputs
+---- e.g. position
+---- e.g. another behaviourable variable
+```
+
+---
+
+### Training
+
+To train a network: 
+1. First edit training hyperparameters and paths in deepinsight/options.py
+2. Edit loss keys, and their corresponding loss functions and loss weights in train_CNN.py
+3. If you'd like to plot losses using wandb, make sure it is instantiated on your machine (run wandb.init())
+4. Run train_CNN.py to train and save the model
+
+---
+
+### Testing
+
+To test a network: 
+1. First edit paths and loss keys in test_CNN.py
+4. Run test_CNN.py to test the model. The plots will work if position, direction, and speed has been decoded.
+
+---
+
+### BrainSLAM
+
+To run BrainSLAM
+1. Change path names in deep_insight/options.py
+2. Run run_brainSLAM.py
