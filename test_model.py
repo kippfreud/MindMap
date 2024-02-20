@@ -18,6 +18,7 @@ import torch
 import wandb
 import matplotlib.pyplot as plt
 import imageio
+import matplotlib
 
 # -----------------------------------------------------------------------
 
@@ -29,13 +30,13 @@ else:
 takeout = False
 
 #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
-PREPROCESSED_HDF5_PATH = 'data/Gerrit.h5'
-MODEL_PATH = 'models/Gerrit.pt'
+PREPROCESSED_HDF5_PATH = 'data/Elliott_train.h5'
+MODEL_PATH = 'models/Elliott_0.pt'
 
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
-                  'head_direction': 'cyclical_mae_rad',
+                  #'head_direction': 'cyclical_mae_rad',
                   'direction': 'cyclical_mae_rad',
                   'speed': 'mae'}
 # Get loss functions for each output
@@ -44,7 +45,7 @@ for key, item in loss_functions.items():
     loss_functions[key] = function_handle
 
 loss_weights = {'position': 1,
-                'head_direction': 25,
+                #'head_direction': 25,
                 'direction': 25,
                 'speed': 2}
 # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
@@ -65,14 +66,14 @@ training_indices = np.array(training_indices)
 test_indeces = np.array(cv_splits[1])
 # opts -> generators -> model
 # reset options for this cross validation set
-training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(training_indices, test_indeces))
+training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=([training_indices], [test_indeces]))
 training_options['loss_functions'] = loss_functions.copy()
 training_options['loss_weights'] = loss_weights
 training_options['loss_names'] = list(loss_functions.keys())
 training_options['shuffle'] = False
 training_options['random_batches'] = False
 
-train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_file)
+train_dataset, test_dataset = create_train_and_test_datasets(training_options, [hdf5_file])
 
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
@@ -131,12 +132,12 @@ with imageio.get_writer('testt.gif', mode='I') as writer:
         logits = model(batch)
 
         position_ests = list(logits[0])
-        angle_ests = list(logits[2])
-        speed_ests = list(logits[3])
+        angle_ests = list(logits[1])
+        speed_ests = list(logits[2])
 
         position = list(labels[0])
-        angle = list(labels[2])
-        speeds = list(labels[3])
+        angle = list(labels[1])
+        speeds = list(labels[2])
 
         plot_positions = position
         plot_position_ests = position_ests
@@ -189,8 +190,8 @@ with imageio.get_writer('testt.gif', mode='I') as writer:
 
             compass_ax.arrow(0, 0,
                              #-5.,5.,
-                             th, sp,
-                             alpha=0.5, width=0.1,
+                             th*np.pi/180, sp/2,
+                             alpha=0.5, width=0.01,
                              edgecolor='black', facecolor='green', lw=2, zorder=5)
             the = angle_ests[i].item()
             spe = speed_ests[i].item()
@@ -200,12 +201,13 @@ with imageio.get_writer('testt.gif', mode='I') as writer:
             ALL_THE.append(the)
             ALL_SPE.append(spe)
 
-            compass_ax.arrow(0, 0,
-                             the, spe,
-                             alpha=0.5, width=0.1,
-                             edgecolor='black', facecolor='red', lw=2, zorder=5)
+            c = compass_ax.arrow(0, 0,
+                             the*np.pi/180, spe/2,
+                             alpha=0.5, width=0.01,
+                             edgecolor='black', facecolor='red', lw=2, zorder=5, head_length=0)
+
             plt.draw()
-            plt.pause(0.0001)
+            plt.pause(0.1)
             print(f"{P}")
             #plt.savefig(f"imgs/{P}.png")
             P += 1
@@ -226,7 +228,7 @@ with imageio.get_writer('testt.gif', mode='I') as writer:
     #         plt.scatter(list(position_ests[i])[j].detach().numpy()[0], list(position_ests[i])[j].detach().numpy()[1], c="red")
     #         plt.draw()
     #         plt.pause(0.0001)
-    # print("ok")
+
 pos_losses = torch.tensor(pos_losses)
 hd_losses = torch.tensor(hd_losses)
 speed_losses = torch.tensor(speed_losses)

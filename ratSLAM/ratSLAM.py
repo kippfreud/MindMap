@@ -49,7 +49,6 @@ class RatSLAM(object):
     # Public Methods
     # ---------------------------------------------------------
 
-    @timethis
     def step(self, input):
         """
         Performs a step of the RatSLAM algorithm by analysing given input data.
@@ -76,6 +75,7 @@ class RatSLAM(object):
         x_pc, y_pc, th_pc = self.pose_cells.step(view_cell, vtrans, vrot)
         # Execute iteration of experience map
         self.experience_map.step(view_cell, vtrans, vrot, x_pc, y_pc, th_pc,
-                                 true_pose=(input.raw_data[1][0],input.raw_data[1][2]),
-                                 true_odometry=(input.raw_data[1][3], input.raw_data[1][2]))
+                                 true_pose=(input.raw_data[1][0],input.raw_data[1][1]),
+                                 true_odometry=(input.raw_data[1][2], input.raw_data[1][1]))
+                                 #true_odometry=(input.raw_data[1][3], input.raw_data[1][2])) #ORIGINAL
         self.last_pose = (input.raw_data[1][0],input.raw_data[1][2])

@@ -20,7 +20,7 @@ class Trainer(object):
         model: nn.Module,
         train_loader: DataLoader,
         val_loader: DataLoader,
-        criterion: nn.Module,
+        criterion: tuple,
         optimizer: Optimizer,
         device: torch.device,
         use_wandb: bool
@@ -48,9 +48,6 @@ class Trainer(object):
             if self.use_wandb: wandb.log({'step': self.step, 'epoch': epoch})
             epoch_steps = 0
             self.model.train()
-            epoch_training_loss = {
-                k: [] for k in self.target_names
-            }
             for batch, labels in self.train_loader:
                 if epoch_steps > 0 and epoch_steps % self.train_loader.dataset.steps_per_epoch==0:
                     break
@@ -77,15 +74,11 @@ class Trainer(object):
                     if self.use_wandb:
                         wandb.log({'epoch': epoch, f'Training_Loss_{loss_key}': torch.mean(l)})
                         wandb.log({'step': self.step, f'Training_Loss_{loss_key}': torch.mean(l)})
-                    epoch_training_loss[loss_key] = {
-                        k: [] for k in self.target_names
-                    }
                     losses = torch.cat((
                         losses,
                         l
                     ))
-                loss = torch.mean(losses)
-                #print(f"Loss = {loss}")
+                loss = torch.sum(losses)
                 if self.use_wandb:
                     wandb.log({'epoch': epoch, 'Training_Loss_Total': loss})
                     wandb.log({'step': self.step, 'Training_Loss_Total': loss})
@@ -112,7 +105,10 @@ class Trainer(object):
             k: [] for k in self.target_names
         }
         with torch.no_grad():
+            val_batch_steps = 0
             for batch, labels in self.val_loader:
+                if val_batch_steps > 0 and val_batch_steps % self.val_loader.dataset.validation_steps==0:
+                    break
                 batch = batch.to(self.device)
                 for i in range(len(labels)):
                     labels[i] = labels[i].to(self.device)
@@ -127,6 +123,7 @@ class Trainer(object):
                             loss_weight
                         )
                     validation_loss[loss_key].append(l)
+                val_batch_steps += 1
         if self.use_wandb:
             total_loss = 0
             for k in self.target_names:

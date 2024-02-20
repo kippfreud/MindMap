@@ -43,5 +43,4 @@ if __name__ == "__main__":
     plt.scatter(x,y)
     plt.show()
     showTiming()
-    print("Finished!")
     exit(0)

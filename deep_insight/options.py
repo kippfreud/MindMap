@@ -5,8 +5,10 @@ Defines options dict for training, network params, etc.
 # ---------------------------------------------------------------------
 
 RAT_NAME = "Elliott"
-MODEL_PATH = f"models/{RAT_NAME}.pt"
-H5_PATH = f"data/{RAT_NAME}.h5"
+MODEL_PATH = f"models/{RAT_NAME}_0.pt"
+H5_PATH = f"data/{RAT_NAME}_train.h5"
+# MODEL_PATH = f"models/{RAT_NAME}_0.pt"
+# H5_PATH = f"data/{RAT_NAME[0]}_train.h5"
 
 # ---------------------------------------------------------------------
 
@@ -27,7 +29,7 @@ def get_opts(fp_hdf_out, train_test_times):
     opts['model_function'] = 'Standard_Decoder'  # Model architecture used
     opts['model_timesteps'] = 64  # How many timesteps are used in the input layer, e.g. a sampling rate of 30 will yield 2.13s windows. Has to be divisible X times by 2. X='num_convs_tsr'
     opts['num_convs_tsr'] = 5  # Number of downsampling steps within the model, e.g. with model_timesteps=64, it will downsample 64->32->16->8->4 and output 4 timesteps
-    opts['learning_rate'] = 0.0007  # Learning rate
+    opts['learning_rate'] = 0.0007 # Learning rate
     opts['kernel_size'] = 3  # Kernel size for all convolutional layers
     opts['act_conv'] = 'ELU'  # Activation function for convolutional layers
     opts['act_fc'] = 'ELU'  # Activation function for fully connected layers
@@ -37,10 +39,10 @@ def get_opts(fp_hdf_out, train_test_times):
     opts['num_dense'] = 2  # Number of fully connected layers
 
     # -------- TRAINING----------------------
-    opts['batch_size'] = 8  # Batch size used for training the model
+    opts['batch_size'] = 32  # Batch size used for training the model
     opts['steps_per_epoch'] = 250  # Number of steps per training epoch
-    opts['validation_steps'] = 1  # Number of steps per validation epoch #..todo: fix validation
-    opts['epochs'] = 1000  # Number of epochs
+    opts['validation_steps'] = 250  # Number of steps per validation epoch #..todo: fix validation
+    opts['epochs'] = 100  # Number of epochs
     opts['shuffle'] = False  # If input should be shuffled
     opts['random_batches'] = True  # If random batches in time are used
     opts['num_cvs'] = 5 # the number of cross validation splits

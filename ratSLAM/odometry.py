@@ -40,7 +40,7 @@ class Odometry(object):
         """
         translation, r = self._get_odometry(input)
 
-        if self.old_rotation is None or absolute_rot is False:
+        if self.old_rotation is None or absolute_rot is True:
             rotation = r
         else:
             rotation = self._get_angle_diff(r, self.old_rotation)

@@ -37,7 +37,7 @@ class WaveletDataset(Dataset):
         # 1.) Set all options as attributes
         self.set_opts_as_attribute(opts)
         # 2.) Load data memmaped for mean/std estimation and fast plotting
-        self.wavelets = [np.array(hdf5_file['inputs/wavelets'])[:, 10:, :] for hdf5_file in hdf5_files]
+        self.wavelets = [np.array(hdf5_file['inputs/wavelets'])[:, :, :] for hdf5_file in hdf5_files]
 
         self.last_pos = None
         self.last_speed = None

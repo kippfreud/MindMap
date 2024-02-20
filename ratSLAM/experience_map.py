@@ -215,10 +215,15 @@ class ExperienceMap(object):
 
         ..todo:: improve this so axis do not have to be preset
         """
+        # radar green, solid grid lines
+        plt.rc('grid', color='#316931', linewidth=1, linestyle='-')
+        plt.rc('xtick', labelsize=15)
+        plt.rc('ytick', labelsize=15)
+
         self.position_ax.clear()
         self.compass_ax.clear()
         self.position_ax.set_xlim([-300, 600])
-        self.position_ax.set_ylim([-300, 600])
+        self.position_ax.set_ylim([-600, 600])
         self.compass_ax.set_ylim(0, 0.02)
         self.compass_ax.set_yticks(np.arange(0, 0.2, 0.05))
 
@@ -235,12 +240,12 @@ class ExperienceMap(object):
         # COMPASS AXIS
         self.compass_ax.arrow(0, 0,
                              # -5.,5.,
-                             self.true_pose[1], self.true_speed,
+                             self.true_pose[1][0]*np.pi/180, self.true_speed/2,
                              alpha=0.5, width=0.1,
                              edgecolor='black', facecolor='green', lw=1.3, zorder=3)
         self.compass_ax.arrow(0, 0,
                               # -5.,5.,
-                              self.accum_th, self.true_speed,
+                              self.accum_th, self.true_speed/2,
                               alpha=0.5, width=0.1,
                               edgecolor='black', facecolor='red', lw=1.3, zorder=3)
 
@@ -269,11 +274,11 @@ class ExperienceMap(object):
         else:
             self.true_speed = ((self.true_pose[0][0] - true_pose[0][0])**2 + (self.true_pose[0][1] - true_pose[0][1])**2)**0.5
         self.true_pose = true_pose
-        print(f"Rotation is {rotation}")
-        print(f"Translation is {translation}")
+        # print(f"Rotation is {rotation}")
+        # print(f"Translation is {translation}")
         # Use translation and rotation to update current position estimates of agent.
-        self.accum_th = self._clip_angle_pi(self.accum_th - rotation)
-        #self.accum_th = self._clip_angle_pi(rotation)
+        #self.accum_th = self._clip_angle_pi(self.accum_th - rotation)
+        self.accum_th = self._clip_angle_pi(rotation)
         self.accum_diff_x += translation * np.cos(self.accum_th)
         self.accum_diff_y += translation * np.sin(self.accum_th)
         # Get distance between last experience and new location

@@ -31,7 +31,7 @@ PREPROCESSED_HDF5_PATH = H5_PATH
 hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode='r')
 wavelets = np.array(hdf5_file['inputs/wavelets'])
 loss_functions = {'position': 'euclidean_loss',
-                  'head_direction': 'cyclical_mae_rad',
+                  #'head_direction': 'cyclical_mae_rad',
                   'direction': 'cyclical_mae_rad',
                   #'direction_delta': 'cyclical_mae_rad',
                   'speed': 'mae'}
@@ -41,7 +41,7 @@ for key, item in loss_functions.items():
     loss_functions[key] = function_handle
 
 loss_weights = {'position': 1,
-                'head_direction': 25,
+                #'head_direction': 25,
                 'direction': 25,
                 #'direction_delta': 25,
                 'speed': 2}
@@ -63,14 +63,14 @@ training_indices = np.array(training_indices)
 test_indeces = np.array(cv_splits[-1])
 # opts -> generators -> model
 # reset options for this cross validation set
-training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=(training_indices, test_indeces))
+training_options = get_opts(PREPROCESSED_HDF5_PATH, train_test_times=([training_indices], [test_indeces]))
 training_options['loss_functions'] = loss_functions.copy()
 training_options['loss_weights'] = loss_weights
 training_options['loss_names'] = list(loss_functions.keys())
 training_options['shuffle'] = False
 training_options['random_batches'] = False
 
-train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_file)
+train_dataset, test_dataset = create_train_and_test_datasets(training_options, [hdf5_file])
 model_function = getattr(deep_insight.networks, train_dataset.model_function)
 MODEL = model_function(train_dataset, show_summary=False)
 MODEL.load_state_dict(torch.load(MODEL_PATH))
@@ -80,9 +80,9 @@ def get_odometry(data, ret_loc=False):
     tansor = torch.from_numpy(data).unsqueeze(0)
     logits = MODEL(tansor)
     position_ests = list(logits[0])[0]
-    angle_ests = list(logits[2])[0]
-    speed_ests = list(logits[3])[0]
+    angle_ests = list(logits[1])[0]
+    speed_ests = list(logits[2])[0]
     if ret_loc == False:
         return speed_ests[0].item(), angle_ests.item() #* (np.pi /180.)
     else:
-        return speed_ests[0].item(), angle_ests.item(), [p.item() for p in position_ests]
+        return speed_ests[0].item()*100, angle_ests.item()*np.pi/180. , [p.item() for p in position_ests]

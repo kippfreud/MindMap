@@ -144,7 +144,7 @@ def preprocess_input(fp_hdf_out, hdf5_in, average_window=1000, channels=None, wi
                                                        (wavelet_power.shape[1] // average_window, average_window,
                                                         output_chunk[key].shape[1]))
                     except:
-                        print("oo")
+                        print("WARNING: Output chunk failed to be reshaped")
                     if key != "position":
                         output_chunk[key] = np.mean(output_chunk[key], axis=1)
                     else:

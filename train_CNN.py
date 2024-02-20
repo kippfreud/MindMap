@@ -20,9 +20,10 @@ import glob
 # -----------------------------------------------------------------------
 
 DATA_DIR = "./data/"
-RAT = "F"
-RAT_NAME = "Felix"
-DATA_FILES = [f for f in glob.glob(f"{DATA_DIR}{RAT}*train.h5") if "PC" not in f and "PFC" not in f]
+#RAT = "F"
+RAT_NAME = "Elliott"
+#DATA_FILES = [f for f in glob.glob(f"{DATA_DIR}{RAT}*train.h5") if "PC" not in f and "PFC" not in f]
+DATA_FILES = [f"{DATA_DIR}{RAT_NAME}_train.h5"]
 USE_WANDB = True
 
 # -----------------------------------------------------------------------
@@ -36,16 +37,15 @@ if __name__ == '__main__':
     start_time = time.time()
     if USE_WANDB: wandb.init(project=RAT_NAME,
                              entity="wolgast1")
-    #PREPROCESSED_HDF5_PATH = './data/processed_R2478.h5'
+
     hdf5_files = [h5py.File(f, mode='r') for f in DATA_FILES]
     wavelets = [np.array(hdf5_file['inputs/wavelets']) for hdf5_file in hdf5_files]
     frequencies = [np.array(hdf5_file['inputs/fourier_frequencies']) for hdf5_file in hdf5_files]
 
     loss_functions = {'position': 'euclidean_loss',
                       #'head_direction': 'cyclical_mae_rad',
-                      #'direction': 'cyclical_mae_rad',
-                      #'direction_delta': 'cyclical_mae_rad',
-                      #'speed': 'mae'}
+                      'direction': 'cyclical_mae_rad',
+                      'speed': 'mae'
                       }
     # Get loss functions for each output
     for key, item in loss_functions.items():
@@ -53,13 +53,12 @@ if __name__ == '__main__':
         loss_functions[key] = function_handle
 
     loss_weights = {'position': 1,
-                    #'head_direction': 200,  #was 10, tweaked for MJ
-                    #'direction': 200,  # was 10, tweaked for MJ
-                    #'direction_delta': 10,  # was 10, tweaked for MJ
-                    #'speed': 5} #was 2 but tweaked for MJ dataset
+                    #'head_direction': 5000,  #was 10, tweaked for MJ
+                    'direction': 10,  # was 10, tweaked for MJ
+                    'speed': 2500 #was 2 but tweaked for MJ dataset
                     }
 
-    # ..todo: second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
+    # second param is unneccecary at this stage, use two empty arrays to match signature but it doesn't matter
     training_options = get_opts(hdf5_files, train_test_times=(np.array([]), np.array([])))
 
     exp_indices = []
@@ -76,14 +75,13 @@ if __name__ == '__main__':
         for i in range(len(wavelets)):
             training_indices.append( np.setdiff1d(exp_indices[i], cv_splits[i][cv_run]) ) # All except the test indices
             testing_indices.append( cv_splits[i][cv_run] )
-        # opts -> generators -> model
+
         # reset options for this cross validation set
         training_options = get_opts(hdf5_files, train_test_times=(training_indices, testing_indices))
         training_options['loss_functions'] = loss_functions.copy()
         training_options['loss_weights'] = loss_weights
         training_options['loss_names'] = list(loss_functions.keys())
 
-        del wavelets
         train_dataset, test_dataset = create_train_and_test_datasets(training_options, hdf5_files)
 
         train_loader = torch.utils.data.DataLoader(
@@ -119,8 +117,6 @@ if __name__ == '__main__':
 
         trainer.train()
 
-        #torch.save(model.state_dict(), f"models/{rat_name}.pt")
-
-        print("Done!")
-        print("TIME:")
-        print(time.time() - start_time)
+        torch.save(model.state_dict(), f"models/{RAT_NAME}_{cv_run}.pt")
+        print(f"Training Complete: Trained in {time.time() - start_time}")
+        exit(0)
