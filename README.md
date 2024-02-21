@@ -41,23 +41,32 @@ This file hierarchy should look like:
 ### Training
 
 To train a network: 
-1. First edit training hyperparameters and paths in deepinsight/options.py
+1. First edit training hyperparameters in deepinsight/options.py
 2. Edit loss keys, and their corresponding loss functions and loss weights in train_CNN.py
 3. If you'd like to plot losses using wandb, make sure it is instantiated on your machine (run wandb.init())
-4. Run train_CNN.py to train and save the model
+4. Run train_CNN.py to train and save the model e.g.
+```
+python train_CNN.py --h5files data/Elliott_train.h5 --mod_name Elliott --use_wandb True
+```
 
 ---
 
 ### Testing
 
 To test a network: 
-1. First edit paths and loss keys in test_CNN.py
-4. Run test_CNN.py to test the model. The plots will work if position, direction, and speed has been decoded.
+1. First loss keys in test_CNN.py depending on what is being decoded.
+2. Run test_CNN.py to test the model. The plots will work if position, direction, and speed has been decoded. e.g.
+```
+python test_CNN.py --h5file data/Elliott.h5 --model_path models/Elliott_0.pt
+```
 
 ---
 
 ### BrainSLAM
 
 To run BrainSLAM
-1. Change path names in deep_insight/options.py
-2. Run run_brainSLAM.py
+1. You MUST be decoding variables named "position", "direction", and "speed"
+2. Run run_brainSLAM.py e.g.
+```
+--h5file data/Elliott.h5 --model_path models/Elliott_0.pt
+```
