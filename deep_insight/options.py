@@ -4,12 +4,6 @@ Defines options dict for training, network params, etc.
 
 # ---------------------------------------------------------------------
 
-RAT_NAME = "Elliott"
-MODEL_PATH = f"models/{RAT_NAME}_0.pt"
-H5_PATH = f"data/{RAT_NAME}.h5"
-
-# ---------------------------------------------------------------------
-
 
 def get_opts(fp_hdf_out, train_test_times):
     """
