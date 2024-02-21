@@ -7,6 +7,8 @@ Class containing utilities.
 import time
 from math import sqrt
 
+from utils.logger import logger
+
 # -----------------------------------------------------------------------
 
 TIMING_INFO = True
@@ -45,9 +47,9 @@ def showTiming():
     Print all timing info stored in the TIMINGS dict.
     """
     if TIMING_INFO:
-        print("Showing average timing info for method instances")
+        logger.info("Showing average timing info for method instances")
         for k, v in TIMINGS.items():
-            print(
+            logger.info(
                 "{3}: {0:.2f} (sigma={1:.2f}, total={2:.2f})".format(
                     mean(v), stdEstimate(v), sum(v), k
                 )

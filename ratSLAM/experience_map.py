@@ -9,6 +9,7 @@ import networkx as nx
 import numpy as np
 
 from ratSLAM.utilities import timethis
+from utils.logger import logger
 from utils.misc import rotate
 
 # -----------------------------------------------------------------------
@@ -281,9 +282,6 @@ class ExperienceMap(object):
         )
         self.position_ax.legend()
         # COMPASS AXIS
-
-        print(f"True th = {self.true_pose[1][0]*np.pi/180}")
-        print(f"{self.true_pose[1][0]*np.pi/180 - self.accum_th}")
         self.compass_ax.arrow(
             0,
             0,
@@ -405,7 +403,7 @@ class ExperienceMap(object):
             if num_candidate_matches > 1:
                 # Currently there is no implementation for when there are multiple matching nodes
                 # ..todo: Implement an algorithm for dealing with this situation, though it rarely happens
-                print(
+                logger.warning(
                     "WARNING: Multiple matching experience nodes, no implementation for dealing with this"
                 )
             else:
@@ -439,7 +437,6 @@ class ExperienceMap(object):
         self.history.append(self.current_exp)
         # If we do not need to adjust the map, return.
         if not adjust_map:
-            print(f"At end of step AccumTh = {self.accum_th}")
             return
         # if we do need to adjust the map, do it now.
         # ..todo: reimplement map adjustment
@@ -549,7 +546,7 @@ class ExperienceMap(object):
         :param th: The angle the agent is heading when at the child node.
         """
         if self.G.has_edge(parent, child):
-            print("WARNING: This edge already exists!")
+            logger.warning("WARNING: This edge already exists!")
         self.G.add_edge(parent, child, weight=(x_dif**2 + y_dif**2) ** 0.5)
         parent.link_to(child, x_dif, y_dif, th)
 

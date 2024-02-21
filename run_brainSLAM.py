@@ -11,13 +11,13 @@ from ratSLAM.data_simulation import generate_dummy_dataset
 from ratSLAM.ratSLAM import RatSLAM
 from ratSLAM.utilities import showTiming
 from utils.get_MJ_dataset import get_mj_dataset
-from utils.logger import root_logger
+from utils.logger import logger
 
 # ------------------------------------------------------------------------
 
 if __name__ == "__main__":
 
-    root_logger.debug("Starting RatSLAM...")
+    logger.debug("Starting RatSLAM...")
 
     slam = RatSLAM(absolute_rot=True)
 

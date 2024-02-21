@@ -12,6 +12,7 @@ from ratSLAM.odometry import Odometry
 from ratSLAM.pose_cells import PoseCells
 from ratSLAM.utilities import timethis
 from ratSLAM.view_cells import ViewCells
+from utils.logger import logger
 
 # -----------------------------------------------------------------------
 
@@ -57,8 +58,8 @@ class RatSLAM(object):
         Performs a step of the RatSLAM algorithm by analysing given input data.
         """
         if not isinstance(input, Input):
-            print("ERROR: input is not instance of Input class")
-            exit(0)
+            logger.error("ERROR: input is not instance of Input class")
+            raise TypeError("Input is not instance of Input class")
         x_pc, y_pc, th_pc = self.pose_cells.active_cell
         # Get activated view cell
         view_cell = self.view_cells.observe_data(input, x_pc, y_pc, th_pc)

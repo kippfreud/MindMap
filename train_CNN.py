@@ -19,6 +19,7 @@ import wandb
 from deep_insight.options import get_opts
 from deep_insight.trainer import Trainer
 from deep_insight.wavelet_dataset import create_train_and_test_datasets
+from utils.logger import logger
 
 # -----------------------------------------------------------------------
 
@@ -75,6 +76,7 @@ if __name__ == "__main__":
         exp_indices.append(w_inds)
         cv_splits.append(np.array_split(w_inds, training_options["num_cvs"]))
 
+    model = None
     for cv_run in range(training_options["num_cvs"]):
         # For cv
         training_indices = []
@@ -113,8 +115,11 @@ if __name__ == "__main__":
             pin_memory=True,
         )
 
-        model_function = getattr(deep_insight.networks, train_dataset.model_function)
-        model = model_function(train_dataset, show_summary=False)
+        if model is None:
+            model_function = getattr(
+                deep_insight.networks, train_dataset.model_function
+            )
+            model = model_function(train_dataset, show_summary=False)
 
         optimizer = torch.optim.Adam(
             params=model.parameters(), lr=train_dataset.learning_rate, amsgrad=True
@@ -133,5 +138,6 @@ if __name__ == "__main__":
         trainer.train()
 
         torch.save(model.state_dict(), f"models/{RAT_NAME}_{cv_run}.pt")
-        print(f"Training Complete: Trained in {time.time() - start_time}")
-        exit(0)
+        logger.info(
+            f"Training CV Split {cv_run} Complete: Trained in {time.time() - start_time}s"
+        )

@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from utils.logger import logger
 from utils.use_DI_model import get_odometry
 
 # -----------------------------------------------------------------------
@@ -35,24 +36,24 @@ class Input(ABC):
         """
         Templateizes the raw data, returns template.
         """
-        print("ERROR: Function should be overwritten by derived class.")
-        exit(0)
+        logger.error("ERROR: Function should be overwritten by derived class.")
+        raise NotImplementedError
 
     @abstractmethod
     def compareSimilarity(self, other_data):
         """
         Compares this inputs template to another - returns similarity score.
         """
-        print("ERROR: Function should be overwritten by derived class.")
-        exit(0)
+        logger.error("ERROR: Function should be overwritten by derived class.")
+        raise NotImplementedError
 
     @abstractmethod
     def compareOdometry(self, other_template):
         """
         Compares this inputs template to another - returns odometry values
         """
-        print("ERROR: Function should be overwritten by derived class.")
-        exit(0)
+        logger.error("ERROR: Function should be overwritten by derived class.")
+        raise NotImplementedError
 
 
 # -----------------------------------------------------------------------
@@ -70,11 +71,11 @@ class DummyInput(Input):
         :param data: raw data to be wrapped, should be a 2-tuple with (data, odometry)
         """
         if not isinstance(data, tuple):
-            print("ERROR: data should be a 2 element tuple")
-            exit(0)
+            logger.error("ERROR: data should be a 2 element tuple")
+            raise TypeError("ERROR: data should be a 2 element tuple")
         if len(data) != 2:
-            print("ERROR: data should be a 2 element tuple")
-            exit(0)
+            logger.error("ERROR: data should be a 2 element tuple")
+            raise TypeError("ERROR: data should be a 2 element tuple")
         self.raw_data = data
         self.template = self._getTemplate(data)
 
@@ -113,11 +114,11 @@ class MattJonesDummyInput(Input):
         :param data: raw data to be wrapped, should be a 2-tuple with (data, odometry)
         """
         if not isinstance(data, tuple):
-            print("ERROR: data should be a 2 element tuple")
-            exit(0)
+            logger.error("ERROR: data should be a 2 element tuple")
+            raise TypeError("ERROR: data should be a 2 element tuple")
         if len(data) != 2:
-            print("ERROR: data should be a 2 element tuple")
-            exit(0)
+            logger.error("ERROR: data should be a 2 element tuple")
+            raise TypeError("ERROR: data should be a 2 element tuple")
         self.raw_data = data
         self.template = self._getTemplate(data)
 
@@ -165,11 +166,11 @@ class MattJonesInput(Input):
         :param data: raw data to be wrapped, should be a 2-tuple with (data, odometry)
         """
         if not isinstance(data, tuple):
-            print("ERROR: data should be a 2 element tuple")
-            exit(0)
+            logger.error("ERROR: data should be a 2 element tuple")
+            raise TypeError("ERROR: data should be a 2 element tuple")
         if len(data) != 2:
-            print("ERROR: data should be a 2 element tuple")
-            exit(0)
+            logger.error("ERROR: data should be a 2 element tuple")
+            raise TypeError("ERROR: data should be a 2 element tuple")
         self.raw_data = data
         self.odom = None
         self.template = self._getTemplate(data)

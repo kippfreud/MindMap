@@ -8,6 +8,7 @@ import numpy as np
 
 from ratSLAM.input import Input
 from ratSLAM.utilities import timethis
+from utils.logger import logger
 
 # -----------------------------------------------------------------------
 
@@ -135,8 +136,8 @@ class ViewCells(object):
         :return: view cell active after observing this data.
         """
         if not isinstance(input, Input):
-            print("ERROR: input is not instance of Input class.")
-            exit(0)
+            logger.error("ERROR: input is not instance of Input class.")
+            raise TypeError("input is not instance of Input class")
         # Get similarity scores comparing this data to all others
         scores = self._get_similarity_scores(input)
         # Decrease the decay value of each view cell
