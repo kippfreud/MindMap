@@ -218,6 +218,7 @@ class ExperienceMap(object):
         self.compass_ax = self.fig.add_subplot(122, polar=True, facecolor="#E6E6E6")
         self.compass_ax.set_ylim(0, 5)
         self.compass_ax.set_yticks(np.arange(0, 5, 1.0))
+        self.plot_number = 0
         # radar green, solid grid lines
         plt.rc("grid", color="#316931", linewidth=1, linestyle="-")
         plt.rc("xtick", labelsize=15)
@@ -310,12 +311,14 @@ class ExperienceMap(object):
         )
 
         plt.pause(0.005)
-
+        plt.savefig(f"imgs/{self.plot_number}.png")
+        self.plot_number += 1
         image = np.frombuffer(plt.gcf().canvas.tostring_rgb(), dtype="uint8")
         # image = image.reshape(plt.gcf().canvas.get_width_height()[::-1] + (3,))
         image = image.reshape(
             (int(6075000 / (1500 * 3)), 1500, 3)
         )  # Windows quick fix ..todo: fix for windows
+        #
         writer.append_data(image)
 
     @timethis

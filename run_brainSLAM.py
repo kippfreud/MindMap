@@ -35,7 +35,8 @@ if __name__ == "__main__":
     data = get_mj_dataset(args.h5file)
     x = []
     y = []
-    with imageio.get_writer("NeuroSLAM-Full.gif", mode="I") as writer:
+    # ..todo: Fix gif writer for windows
+    with imageio.get_writer("BrainSLAM_windows.gif", mode="I") as writer:
         for i, d in enumerate(data):
             if i < 1:
                 continue

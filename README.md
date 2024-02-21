@@ -11,7 +11,7 @@ This repo also contains functionality for using these decoders to perform BrainS
 a SLAM algorithm designed to operate using neural
 LFP data (as opposed to camera or lidar input, as traditional SLAM algorithms would).
 
-<img src="thumbnail.png" alt="drawing" width="200"/>
+<img src="brainSLAM.gif" alt="drawing"/>
 
 This repo was used in both https://arxiv.org/abs/2402.00588 and https://www.biorxiv.org/content/10.1101/2024.02.01.578423v1.abstract
 
@@ -70,3 +70,8 @@ To run BrainSLAM
 ```
 --h5file data/Elliott.h5 --model_path models/Elliott_0.pt
 ```
+
+---
+
+<img src="thumbnail.png" alt="drawing" width="200"/>
+
