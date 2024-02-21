@@ -6,6 +6,7 @@ Runs training for decoding CNN
 
 # -----------------------------------------------------------------------
 
+import argparse
 import glob
 import time
 
@@ -23,13 +24,6 @@ from utils.logger import logger
 
 # -----------------------------------------------------------------------
 
-DATA_DIR = "./data/"
-RAT_NAME = "Elliott"
-DATA_FILES = [f"{DATA_DIR}{RAT_NAME}.h5"]
-USE_WANDB = True
-
-# -----------------------------------------------------------------------
-
 if torch.cuda.is_available():
     DEVICE = torch.device("cuda")
 else:
@@ -37,10 +31,26 @@ else:
 
 if __name__ == "__main__":
     start_time = time.time()
-    if USE_WANDB:
-        wandb.init(project=RAT_NAME, entity="wolgast1")
+    # Create the parser and parse args
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument(
+        "--h5files",
+        nargs="+",
+        required=True,
+        help="h5 files to train on (usually just one, but can be more)",
+    )
+    parser.add_argument(
+        "--mod_name", type=str, required=True, help="The name of the model"
+    )
+    parser.add_argument("--use_wandb", type=bool, default=True, required=False)
+    args = parser.parse_args()
 
-    hdf5_files = [h5py.File(f, mode="r") for f in DATA_FILES]
+    # Setup wandb logging
+    if args.use_wandb:
+        wandb.init(project=args.mod_name, entity="wolgast1")
+
+    # Initialise training vars
+    hdf5_files = [h5py.File(f, mode="r") for f in args.h5files]
     wavelets = [np.array(hdf5_file["inputs/wavelets"]) for hdf5_file in hdf5_files]
     frequencies = [
         np.array(hdf5_file["inputs/fourier_frequencies"]) for hdf5_file in hdf5_files
@@ -77,6 +87,7 @@ if __name__ == "__main__":
         cv_splits.append(np.array_split(w_inds, training_options["num_cvs"]))
 
     model = None
+    # Run training
     for cv_run in range(training_options["num_cvs"]):
         # For cv
         training_indices = []
@@ -132,12 +143,12 @@ if __name__ == "__main__":
             criterion=(loss_functions, loss_weights),
             optimizer=optimizer,
             device=DEVICE,
-            use_wandb=USE_WANDB,
+            use_wandb=args.use_wandb,
         )
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/{RAT_NAME}_{cv_run}.pt")
+        torch.save(model.state_dict(), f"models/{args.mod_name}.pt")
         logger.info(
             f"Training CV Split {cv_run} Complete: Trained in {time.time() - start_time}s"
         )

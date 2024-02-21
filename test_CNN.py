@@ -4,6 +4,8 @@ Runs training for deepInsight
 
 """
 
+import argparse
+
 import h5py
 import imageio
 import matplotlib.pyplot as plt
@@ -15,7 +17,7 @@ import deep_insight.networks
 from deep_insight.options import get_opts
 from deep_insight.wavelet_dataset import create_train_and_test_datasets
 from utils.get_MJ_dataset import get_mj_dataset
-from utils.use_DI_model import get_odometry
+from utils.use_DI_model import MODEL
 
 # -----------------------------------------------------------------------
 
@@ -26,11 +28,15 @@ else:
 
 # -----------------------------------------------------------------------
 
-PREPROCESSED_HDF5_PATH = "data/Elliott_train.h5"
-MODEL_PATH = "models/Elliott_0.pt"
-
+parser = argparse.ArgumentParser(description="Process some integers.")
+parser.add_argument("--h5file", required=True, help="h5 file to test on")
+parser.add_argument(
+    "--model_path", type=str, required=True, help="The path of the model to test"
+)
+args = parser.parse_args()
+MODEL.setup_model(args.h5file, args.model_path)
 # Setup datasets
-hdf5_file = h5py.File(PREPROCESSED_HDF5_PATH, mode="r")
+hdf5_file = h5py.File(args.h5file, mode="r")
 wavelets = np.array(hdf5_file["inputs/wavelets"])
 loss_functions = {
     "position": "euclidean_loss",
@@ -47,9 +53,7 @@ loss_weights = {
     "direction": 25,
     "speed": 2,
 }
-training_options = get_opts(
-    PREPROCESSED_HDF5_PATH, train_test_times=(np.array([]), np.array([]))
-)
+training_options = get_opts(args.h5file, train_test_times=(np.array([]), np.array([])))
 training_options["loss_functions"] = loss_functions.copy()
 training_options["loss_weights"] = loss_weights
 training_options["loss_names"] = list(loss_functions.keys())
@@ -62,7 +66,7 @@ for arr in cv_splits[0:-1]:
 training_indices = np.array(training_indices)
 test_indeces = np.array(cv_splits[1])
 training_options = get_opts(
-    PREPROCESSED_HDF5_PATH, train_test_times=([training_indices], [test_indeces])
+    args.h5file, train_test_times=([training_indices], [test_indeces])
 )
 training_options["loss_functions"] = loss_functions.copy()
 training_options["loss_weights"] = loss_weights
@@ -88,7 +92,7 @@ test_loader = torch.utils.data.DataLoader(
 )
 model_function = getattr(deep_insight.networks, train_dataset.model_function)
 model = model_function(train_dataset, show_summary=False)
-model.load_state_dict(torch.load(MODEL_PATH))
+model.load_state_dict(torch.load(args.model_path))
 model.eval()
 
 # Setup Plotting
@@ -109,8 +113,8 @@ plt.rc("xtick", labelsize=15)
 plt.rc("ytick", labelsize=15)
 
 with imageio.get_writer("testt.gif", mode="I") as writer:
-    for d in get_mj_dataset():
-        speed_est, ang_est, pos_est = get_odometry(d.raw_data[0], True)
+    for d in get_mj_dataset(args.h5file):
+        speed_est, ang_est, pos_est = MODEL.get_odometry(d.raw_data[0], True)
         pos, ang, speed = tuple(d.raw_data[1])
 
         position_ax.clear()

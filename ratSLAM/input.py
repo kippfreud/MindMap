@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from utils.logger import logger
-from utils.use_DI_model import get_odometry
+from utils.use_DI_model import MODEL
 
 # -----------------------------------------------------------------------
 
@@ -148,7 +148,7 @@ class MattJonesDummyInput(Input):
         """
         Compares this inputs template to another - returns odometry values in the form (speed, angle in radians)
         """
-        return get_odometry(self.template)
+        return MODEL.get_odometry(self.template)
 
 
 # -----------------------------------------------------------------------
@@ -186,7 +186,7 @@ class MattJonesInput(Input):
         Compares this inputs template to another - returns similarity score.
         """
         if self.odom is None:
-            self.odom = get_odometry(self.template, True)
+            self.odom = MODEL.get_odometry(self.template, True)
         current_loc = self.odom[2]
         other_loc = other_data.odom[2]
         loc_diff = (
@@ -199,6 +199,6 @@ class MattJonesInput(Input):
         Compares this inputs template to another - returns odometry values in the form (speed, angle in radians)
         """
         if self.odom is None:
-            speed, angle, pos = get_odometry(self.template, True)
+            speed, angle, pos = MODEL.get_odometry(self.template, True)
             self.odom = (speed, angle, pos)
         return self.odom[0], self.odom[1]

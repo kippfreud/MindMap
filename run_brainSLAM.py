@@ -4,6 +4,8 @@ This will perform the RatSLAM algorithm on the data specified in options.py
 
 # -----------------------------------------------------------------------
 
+import argparse
+
 import imageio
 import matplotlib.pyplot as plt
 
@@ -12,16 +14,25 @@ from ratSLAM.ratSLAM import RatSLAM
 from ratSLAM.utilities import showTiming
 from utils.get_MJ_dataset import get_mj_dataset
 from utils.logger import logger
+from utils.use_DI_model import MODEL
 
 # ------------------------------------------------------------------------
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--h5file", required=True, help="h5 file to run brain on")
+    parser.add_argument(
+        "--model_path", type=str, required=True, help="The path of the model to use"
+    )
+    args = parser.parse_args()
+
     logger.debug("Starting RatSLAM...")
 
+    MODEL.setup_model(args.h5file, args.model_path)
     slam = RatSLAM(absolute_rot=True)
 
-    data = get_mj_dataset()
+    data = get_mj_dataset(args.h5file)
     x = []
     y = []
     with imageio.get_writer("NeuroSLAM-Full.gif", mode="I") as writer:
