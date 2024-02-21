@@ -57,7 +57,7 @@ To test a network:
 1. First loss keys in test_CNN.py depending on what is being decoded.
 2. Run test_CNN.py to test the model. The plots will work if position, direction, and speed has been decoded. e.g.
 ```
-python test_CNN.py --h5file data/Elliott.h5 --model_path models/Elliott_0.pt
+python test_CNN.py --h5file data/Elliott_test.h5 --model_path models/Elliott_0.pt
 ```
 
 ---
@@ -68,7 +68,7 @@ To run BrainSLAM
 1. You MUST be decoding variables named "position", "direction", and "speed"
 2. Run run_brainSLAM.py e.g.
 ```
---h5file data/Elliott.h5 --model_path models/Elliott_0.pt
+--h5file data/Elliott_test.h5 --model_path models/Elliott_0.pt
 ```
 
 ---

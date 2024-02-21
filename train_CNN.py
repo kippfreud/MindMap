@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
         trainer.train()
 
-        torch.save(model.state_dict(), f"models/{args.mod_name}.pt")
+        torch.save(model.state_dict(), f"models/{args.mod_name}_{cv_run}.pt")
         logger.info(
             f"Training CV Split {cv_run} Complete: Trained in {time.time() - start_time}s"
         )
