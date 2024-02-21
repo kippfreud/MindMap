@@ -7,7 +7,7 @@ a time series. The architecture for the networks is inspired by those described 
 [Frey et. al (2021)](https://elifesciences.org/articles/66551). We use a pyTorch implementation for added network 
 versatility. 
 
-This repo also contains functionality for using these decoders to perform BrainSLAM - 
+This repo also contains functionality for using these decoders to perform [BrainSLAM](https://arxiv.org/abs/2402.00588) - 
 a SLAM algorithm designed to operate using neural
 LFP data (as opposed to camera or lidar input, as traditional SLAM algorithms would).
 
